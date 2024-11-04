@@ -16,7 +16,7 @@
 
 #### 1.2 Zone Policies
 - DMZ: Public access, WAF protection
-- API Gateway: Authentication enforcement?
+- API Gateway: Authentication enforcement with Firebase
 - Application: Internal services only
 - Data: Restricted access
 
@@ -26,9 +26,10 @@
 ```json
 {
   "methods": {
-    "jwt": {
-      "expiry": "1h",
-      "refresh": "7d",
+    "firebaseAuth": {
+      "provider": "Firebase",
+      "tokenExpiry": "1h",
+      "refreshTokenExpiry": "7d",
       "algorithm": "RS256"
     },
     "apiKey": {
@@ -36,7 +37,7 @@
       "format": "prefix.key.signature"
     },
     "oauth2": {
-      "providers": ["Firebase", "azure"],
+      "providers": ["Firebase", "Azure"],
       "scopes": ["read", "write", "admin"]
     }
   }
@@ -44,10 +45,10 @@
 ```
 
 #### 2.2 Identity Management
-- User identity store
-- Role management
+- User identity store managed by Firebase Authentication
+- Role management via Firebase Custom Claims
 - Permission mapping
-- Session handling
+- Session handling with Firebase tokens
 
 ### 3. Authorization Framework
 
@@ -108,6 +109,7 @@ Level 4: Restricted
 {
   "log_events": {
     "authentication": {
+      "firebase": true,
       "success": true,
       "failure": true,
       "attempts": true
@@ -166,7 +168,7 @@ steps:
 ### 9. Security Architecture Patterns
 
 #### 9.1 Zero Trust Architecture
-- Identity-based access
+- Identity-based access with Firebase Authentication
 - Least privilege
 - Always verify
 - Assume breach
@@ -193,3 +195,4 @@ Layer 5: Data Security
 - Security monitoring
 - Compliance checking
 - Incident response
+

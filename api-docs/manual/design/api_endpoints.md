@@ -131,11 +131,13 @@ Authorization: Bearer <firebase_id_token> X-Firebase-Auth: <firebase_auth_token>
 X-API-Key: <api_key>
 ```
 ### Firebase Admin Endpoints
+```
 POST /api/v1/admin/users/disable 
 POST /api/v1/admin/users/enable 
 POST /api/v1/admin/users/roles 
 GET /api/v1/admin/users/roles 
 DELETE /api/v1/admin/users/roles
+```
 
 ### Query Parameters
 ```
