@@ -24,7 +24,7 @@ class UserRepository(BaseRepository):
                 return user
         raise HTTPException(status_code=404, detail="User not found")
 
-    async def list_users(self, page: int = 1, per_page: int = 20, 
+    async def list_users(self, page: int = 1, per_page: int = 20,
                         filters: Optional[Dict] = None) -> Dict:
         users = list(self.users.values())
         if filters:
@@ -69,7 +69,7 @@ class UserRepository(BaseRepository):
         user.is_active = True
         user.updated_at = datetime.now(timezone.utc)
         return user
-    
+
 
     async def list_user_roles(self) -> List[UserRole]:
         user_roles = []
