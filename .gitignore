@@ -2,3 +2,4 @@ __pycache__
 .env
 .idea
 .~lock.*
+.pytest_cache

@@ -15,10 +15,6 @@ app = FastAPI(
 
 )
 
-
-
-
-
 router = APIRouter(prefix="/api/v1", tags=["API"])
 
 @router.get("/", summary="Redirect to Swagger docs")
