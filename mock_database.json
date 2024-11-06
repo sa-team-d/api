@@ -1,0 +1,65 @@
+{
+	"machines": {
+		"machine-001": {
+			"id": "machine-001",
+			"type": "metal_cutting",
+			"data": {
+				"working_time": 3600,
+				"idle_time": 600,
+				"offline_time": 300,
+				"consumption": 100.0,
+				"power": 50.0,
+				"cost": 0.1,
+				"consumption_working": 80.0,
+				"consumption_idle": 20.0,
+				"cycles": 100,
+				"good_cycles": 90,
+				"bad_cycles": 10,
+				"average_cycle_time": 60.0
+			}
+		},
+		"machine-002": {
+			"id": "machine-002",
+			"type": "laser_welding",
+			"data": {
+				"working_time": 3600,
+				"idle_time": 600,
+				"offline_time": 300,
+				"consumption": 200.0,
+				"power": 100.0,
+				"cost": 0.1,
+				"consumption_working": 160.0,
+				"consumption_idle": 40.0,
+				"cycles": 200,
+				"good_cycles": 180,
+				"bad_cycles": 20,
+				"average_cycle_time": 60.0
+			}
+		},
+		"machine-003": {
+			"id": "machine-003",
+			"type": "assembly",
+			"data": {
+				"working_time": 3600,
+				"idle_time": 600,
+				"offline_time": 300,
+				"consumption": 300.0,
+				"power": 150.0,
+				"cost": 0.1,
+				"consumption_working": 240.0,
+				"consumption_idle": 60.0,
+				"cycles": 300,
+				"good_cycles": 270,
+				"bad_cycles": 30,
+				"average_cycle_time": 60.0
+			}
+		}
+	},
+	"taxonomy": {
+		"production": {
+			"id": "production",
+			"name": "Production",
+			"machines": ["machine-001", "machine-002"]
+		}
+	}
+}

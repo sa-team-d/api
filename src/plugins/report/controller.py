@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import Dict, List, Optional
 from src.models import Report, User
 from src.plugins.report.repository import ReportRepository
-from src.plugins.auth.dependencies import get_current_user
+from src.plugins.auth.firebase import get_current_user
 
 router = APIRouter(prefix="/api/v1/reports", tags=["Reports"])
 repository = ReportRepository()

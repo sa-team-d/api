@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, Path
 from typing import Dict, List, Optional
 from src.plugins.dashboard import schema
-from src.plugins.auth.dependencies import get_current_user, check_permissions
+from src.plugins.auth.firebase import get_current_user, check_permissions
 from src.models import User
 from src.core.pagination import PaginationParams
 from src.plugins.dashboard.repository import DashboardRepository
@@ -20,7 +20,7 @@ async def list_dashboards(
     pagination = PaginationParams(page=page, per_page=per_page)
     filters = dict(item.split(":") for item in filter.split(",")) if filter else None
     fields_list = fields.split(",") if fields else None
-    
+
     return await DashboardRepository().list_dashboards(
         pagination=pagination,
         filters=filters,

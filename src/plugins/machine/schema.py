@@ -3,45 +3,24 @@ Define the schema for the response. This is the data that will be returned by th
 """
 from datetime import datetime
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from typing import Dict, Any, Optional
 
-# Base schemas for authentication
-class Token(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
+class MachineData(BaseModel):
+    working_time: int
+    idle_time: int
+    offline_time: int
+    consumption: float
+    power: float
+    cost: float
+    consumption_working: float
+    consumption_idle: float
+    cycles: int
+    good_cycles: int
+    bad_cycles: int
+    average_cycle_time: float
 
-
-
-
-# Machine schemas
-class MachineBase(BaseModel):
-    name: str
+class Machine(BaseModel):
+    id: str
     type: str
-    description: Optional[str] = None
-    tags: List[str] = []
+    data: MachineData
 
-class MachineCreate(MachineBase):
-    pass
-
-class MachineUpdate(BaseModel):
-    name: Optional[str] = None
-    type: Optional[str] = None
-    description: Optional[str] = None
-    tags: Optional[List[str]] = None
-
-class Machine(MachineBase):
-    id: int
-    created_at: datetime
-    updated_at: datetime
-    status: str = "active"
-    configuration: Optional[Dict[str, Any]] = None
-
-    class Config:
-        from_mode = True
-
-class MachineList(BaseModel):
-    items: List[Machine]
-    total: int
-    page: int
-    per_page: int
-    pages: int
