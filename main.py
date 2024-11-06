@@ -13,6 +13,7 @@ from src.plugins.user import controller as user_controller
 from fastapi import FastAPI, Depends
 from src.plugins.auth.dependencies import verify_firebase_token_and_role
 from src.plugins.auth.auth_utils import get_id_token
+from src.plugins.auth import firebase_config
 
 import os
 from dotenv import load_dotenv

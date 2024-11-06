@@ -6,7 +6,7 @@ from src.models import User
 from fastapi import HTTPException
 from src.models import User
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
+import jwt
 #oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 security = HTTPBearer()
@@ -14,14 +14,18 @@ security = HTTPBearer()
 def verify_firebase_token_and_role(required_role: str):
     def role_verifier(credentials: HTTPAuthorizationCredentials = Depends(security)):
         try:
-            # Verify the token with Firebase Admin
+            print(f"Received token: {credentials.credentials}")
             decoded_token = auth.verify_id_token(credentials.credentials)
+            print(f"Decoded token: {decoded_token}")
+            # Verify the token with Firebase Admin
+            auth.verify_id_token(credentials.credentials)
             # Check if user has the required role
             user_role = decoded_token.get("role")
             if user_role != required_role:
                 raise HTTPException(status_code=403, detail=f"Insufficient permissions. Required role: {required_role}")
             return decoded_token
         except Exception as e:
+            print(f"Error verifying token: {e}")
             raise HTTPException(status_code=401, detail="Invalid Firebase token") from e
 
     return role_verifier

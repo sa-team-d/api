@@ -2,11 +2,12 @@ import firebase_admin
 from firebase_admin import credentials
 import os
 from dotenv import load_dotenv
+from firebase_admin import auth
 
 load_dotenv()
 
 cred = credentials.Certificate(os.getenv("FIREBASE_CREDENTIALS"))
-firebase_admin.initialize_app(cred)
+app = firebase_admin.initialize_app(cred)
 
 # Function to set the "role" claim to "FFM" for a user with a specific UID
 def set_ffm_role(uid):
