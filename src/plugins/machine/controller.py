@@ -8,10 +8,19 @@ from src.plugins.machine.schema import Machine, MachineData
 router = APIRouter(prefix="/api/v1/machine", tags=["Machine"])
 
 # list all machines
-@router.get("/all",status_code=201, response_model=List[Machine], summary="Get all machines in the dataset")
+@router.get("/",status_code=201, response_model=List[Machine], summary="Get all machines in the dataset")
 async def get_all_machines(user=Depends(verify_firebase_token)):
     try:
         machines = await get_all()
+        return machines
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# filter
+@router.post("/filter", response_model=List[Machine], status_code=201, summary="Filter machines by type")
+async def filter_machines(user=Depends(verify_firebase_token), machine_type: str = Query(..., title="The type of the machine")):
+    try:
+        machines = await get_by_type(machine_type)
         return machines
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -25,17 +34,5 @@ async def get_machine_by_id(
     try:
         machine = await get_by_id(machine_id)
         return machine
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# get all machine with a specific type
-@router.get("/type/{machine_type}", response_model=List[Machine], summary="Get all machines with a specific type")
-async def get_machines_by_type(
-    machine_type: str,
-    user=Depends(verify_firebase_token)
-):
-    try:
-        machines = await get_by_type(machine_type=machine_type)
-        return machines
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

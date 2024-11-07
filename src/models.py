@@ -23,10 +23,12 @@ class MachineData(BaseModel):
     average_cycle_time: float
 
 class Machine(BaseModel):
+    #TODO: move machine data to kpi data: create link
     id: str
     type: str
     data: MachineData
 
 class Database (BaseModel):
+    #TODO: copy csv structure to database
     machines: Dict[str, Machine] = {}
     taxonomy: Any = {}

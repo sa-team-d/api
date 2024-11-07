@@ -1,17 +1,21 @@
+"""
+User controller module.
+Contains all the routes for user management.
+"""
 from fastapi import APIRouter, Depends
 from httpx import get
 from .schema import User
-from .repository import add_user_to_db, get_all_users
 from src.plugins.auth.firebase import verify_firebase_token_and_role, verify_firebase_token
 from src.plugins.auth.auth_utils import get_id_token
+from .repository import add_user_to_db, get_all_users, get_user, update_user_db, get_user_by_email, get_user_by_name
 
 router = APIRouter(prefix="/api/v1/user", tags=["User"])
 
-# Endpoint to authenticate users and get their ID token (for testing purposes)
+# Endpoint to authenticate users and get their ID token (for testing purposes): we won't need this, frontend will handle this
 @router.post("/login")
 async def login(email: str, password: str):
     """
-    Authenticate the user and return the ID token
+    Authenticate the user and return the ID token (For testing purposes only)
     Args:
         email (str): User email
         password (str): User password
@@ -25,7 +29,7 @@ async def login(email: str, password: str):
     except Exception as e:
         return {"error": str(e)}
 
-# Endpoint to list all users
+# list all users
 @router.get("/list")
 async def list_users(user = Depends(verify_firebase_token)):
     """
@@ -41,22 +45,85 @@ async def list_users(user = Depends(verify_firebase_token)):
     except Exception as e:
         return {"error": str(e)}
 
+# show currrent user info
+@router.get("/")
+async def get_current_user(user = Depends(verify_firebase_token)):
+    """
+    Get the current user
+    Returns:
+        dict: Current user info
+    """
+    u = await get_user(user.get("uid"))
+    return {"user": u}
+
+# create a new user with the current user's UID
+@router.post("/")
+async def add_user(first_name: str, last_name: str, email: str, phone_number: str, current_user = Depends(verify_firebase_token)):
+    """
+    Add a new user if the current user is authenticated and it doesn't already exist
+    """
+    try:
+        new_user = await add_user_to_db(uid=current_user.get("uid"), first_name=first_name, last_name=last_name, email=email, phone_number=phone_number)
+        return {"user": new_user}
+    except Exception as e:
+        return {"error": str(e)}
+
+# update the current user's info, u can update optional fields
+@router.put("/")
+async def update_user(first_name: str = None, last_name: str = None, phone_number: str = None, user = Depends(verify_firebase_token)):
+    """
+    Update the current user's info
+    Args:
+        first_name (str): User first name
+        last_name (str): User last name
+        phone_number (str): User phone number
+
+    Returns:
+        dict: Updated user info
+    """
+    try:
+        u = await update_user_db(uid=user.get("uid"), first_name=first_name, last_name=last_name, phone_number=phone_number)
+        return {"user": u}
+    except Exception as e:
+        return {"error": str(e)}
+
+# filter users by name or email
+@router.get("/filter")
+async def filter_users(first_name: str = None, last_name: str = None, email: str = None, user = Depends(verify_firebase_token)):
+    """
+    Filter users by name or email
+    Args:
+        name (str): User name
+        email (str): User email
+
+    Returns:
+        dict: List of users matching the filter
+    """
+    try:
+        if first_name and last_name:
+            users = await get_user_by_name(first_name, last_name)
+        if email:
+            users = await get_user_by_email(email)
+        return {"users": users}
+    except Exception as e:
+        return {"error": str(e)}
+
 ####### Example routes with role-based access control #######
 
 # Route accessible only by FFM role
-@router.get("/ffm-only")
-async def ffm_only(user=Depends(verify_firebase_token_and_role("FFM"))):
-    return {"message": "Hello, FFM user!", "user": user}
-
-# Route accessible only by SMO role
-@router.get("/smo-only")
-async def smo_only(user=Depends(verify_firebase_token_and_role("SMO"))):
-    return {"message": "Hello, SMO user!", "user": user}
-
-# Route accessible by all authenticated users
-@router.get("/all-users")
-async def all_users(user=Depends(verify_firebase_token_and_role("USER"))):
-    return {"message": "Hello, authenticated user!", "user": user}
+#@router.get("/ffm-only")
+#async def ffm_only(user=Depends(verify_firebase_token_and_role("FFM"))):
+#    return {"message": "Hello, FFM user!", "user": user}
+#
+## Route accessible only by SMO role
+#@router.get("/smo-only")
+#async def smo_only(user=Depends(verify_firebase_token_and_role("SMO"))):
+#    return {"message": "Hello, SMO user!", "user": user}
+#
+## Route accessible by all authenticated users
+#@router.get("/all-users")
+#async def all_users(user=Depends(verify_firebase_token_and_role("USER"))):
+#    return {"message": "Hello, authenticated user!", "user": user}
 
 ####################
 

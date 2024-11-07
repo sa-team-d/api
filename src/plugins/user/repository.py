@@ -1,3 +1,4 @@
+from os import name
 from typing import List, Dict, Optional
 from fastapi import HTTPException
 from datetime import datetime, timezone
@@ -5,20 +6,76 @@ from .schema import User
 
 # mock a user database for now
 users = {
-    "1": User(
-        uid="1",
-        email="ffm@example.com",
-    ),
-    "2": User(
-        uid="2",
+    "k8SM6PwrJ4g663v5uZo8gfC7iND2": User(
+        uid="k8SM6PwrJ4g663v5uZo8gfC7iND2",
+        first_name="Marco",
+        last_name="Polo",
+        phone_number="1234567890",
         email="smo@example.com",
+        created_at=datetime.now(timezone.utc),
+    ),
+    "xM2kea8akaOKvYta26NMFBy8YnJ3": User(
+        uid="xM2kea8akaOKvYta26NMFBy8YnJ3",
+        first_name="Foo",
+        last_name="Bar",
+        phone_number="0987654321",
+        email="ffm@example.com",
+        created_at=datetime.now(timezone.utc),
     )
 }
 
 # add user info from decoded firebase token to the database
-async def add_user_to_db(user: User):
-    user.created_at = datetime.now(timezone.utc)
-    users[user.uid] = user
+async def add_user_to_db(uid: str, first_name: str, last_name: str, email: str, phone_number: str):
+    user = User(
+        uid=uid,
+        first_name=first_name,
+        last_name=last_name,
+        phone_number=phone_number,
+        email=email,
+    )
+    if uid in users:
+        raise HTTPException(status_code=400, detail="User already exists")
+    else:
+        users[uid] = user
+        return user
+
+async def get_user(uid: str):
+    if uid not in users:
+        raise HTTPException(status_code=404, detail="User not found")
+    return users[uid]
+
+async def get_user_by_email(email: str):
+    us = []
+    for user in users.values():
+        if user.email == email:
+            us.append(user)
+    if len(us) > 0:
+        return us
+    else:
+        raise HTTPException(status_code=404, detail="User not found")
+
+async def get_user_by_name(first_name: str, last_name: str):
+    us = []
+    for user in users.values():
+        if user.first_name == first_name and user.last_name == last_name:
+            us.append(user)
+    if len(us) > 0:
+        return us
+    else:
+        raise HTTPException(status_code=404, detail="User not found")
+
+async def update_user_db(uid: str, first_name: str = None, last_name: str = None, phone_number: str = None):
+    if uid not in users:
+        raise HTTPException(status_code=404, detail="User not found")
+    user = users[uid]
+    if first_name:
+        user.first_name = first_name
+    if last_name:
+        user.last_name = last_name
+    if phone_number:
+        user.phone_number = phone_number
+    user.updated_at = datetime.now(timezone.utc)
+    return user
 
 async def get_all_users():
     return list(users.values())

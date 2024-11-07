@@ -1,11 +1,17 @@
 from datetime import datetime
+from turtle import update
 from typing import List, Optional
+from venv import create
 from pydantic import BaseModel, EmailStr, Field
 
 class User(BaseModel):
-    # info from firebase token
-    uid: str
+    uid: str # Firebase UID
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone_number: Optional[str] = None
     email: EmailStr
+    created_at: datetime = datetime.now()
+    updated_at: Optional[datetime] = None
 
 #class UserBase(BaseModel):
 #    email: EmailStr

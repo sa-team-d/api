@@ -1,0 +1,1 @@
+# TODO: Define the schema for the KPI plugin
