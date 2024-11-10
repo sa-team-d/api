@@ -1,1 +1,0 @@
-# TODO: Implement the interaction with the database for kpis

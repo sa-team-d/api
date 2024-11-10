@@ -2,20 +2,22 @@
 User controller module.
 Contains all the routes for user management.
 """
-from fastapi import APIRouter, Depends
-from httpx import get
-from .schema import User
+from fastapi import APIRouter, Depends, HTTPException
+from src.models import User
 from src.plugins.auth.firebase import verify_firebase_token_and_role, verify_firebase_token
 from src.plugins.auth.auth_utils import get_id_token
 from .repository import get_all_users, get_user, get_user_by_email, get_user_by_name
 
-router = APIRouter(prefix="/api/v1/user", tags=["User"])
+import os
+API_VERSION = os.getenv("VERSION")
+
+router = APIRouter(prefix=f"/api/{API_VERSION}/user", tags=["User"])
 
 # Endpoint to authenticate users and get their ID token (for testing purposes): we won't need this, frontend will handle this
-@router.post("/login")
+@router.post("/login", response_model=dict, status_code=200, summary="Authenticate user and get ID token")
 async def login(email: str, password: str):
     """
-    Authenticate the user and return the ID token (For testing purposes only)
+    TEST ONLY: Authenticate user and get ID token
     Args:
         email (str): User email
         password (str): User password
@@ -30,173 +32,31 @@ async def login(email: str, password: str):
         return {"error": str(e)}
 
 # list all users
-@router.get("/list")
+@router.get("/list",status_code=200, response_model=list[User], summary="List all users")
 async def list_users(user = Depends(verify_firebase_token)):
-    """
-    List all users
-    Returns:
-        dict: List of all users
-    """
     try:
         users = await get_all_users()
-        for u in users:
-            print(u)
-        return {"users": users}
+        return users
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=404, detail=str(e))
 
 # show currrent user info
-@router.get("/")
+@router.get("/", status_code=200, response_model=User, summary="Get current user")
 async def get_current_user(user = Depends(verify_firebase_token)):
-    """
-    Get the current user
-    Returns:
-        dict: Current user info
-    """
-    u = await get_user(user.get("uid"))
-    return {"user": u}
+    try:
+        u = await get_user(user.get("uid"))
+        return u
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 # filter users by name or email
-@router.get("/filter")
+@router.post("/filter", status_code=200, response_model=list[User], summary="Filter users by name or email")
 async def filter_users(first_name: str = None, last_name: str = None, email: str = None, user = Depends(verify_firebase_token)):
-    """
-    Filter users by name or email
-    Args:
-        name (str): User name
-        email (str): User email
-
-    Returns:
-        dict: List of users matching the filter
-    """
     try:
         if first_name and last_name:
             users = await get_user_by_name(first_name, last_name)
         if email:
             users = await get_user_by_email(email)
-        return {"users": users}
+        users
     except Exception as e:
-        return {"error": str(e)}
-
-####### Example routes with role-based access control #######
-
-# Route accessible only by FFM role
-#@router.get("/ffm-only")
-#async def ffm_only(user=Depends(verify_firebase_token_and_role("FFM"))):
-#    return {"message": "Hello, FFM user!", "user": user}
-#
-## Route accessible only by SMO role
-#@router.get("/smo-only")
-#async def smo_only(user=Depends(verify_firebase_token_and_role("SMO"))):
-#    return {"message": "Hello, SMO user!", "user": user}
-#
-## Route accessible by all authenticated users
-#@router.get("/all-users")
-#async def all_users(user=Depends(verify_firebase_token_and_role("USER"))):
-#    return {"message": "Hello, authenticated user!", "user": user}
-
-####################
-
-## Auth endpoints
-#@router.post("/auth/firebase/login", response_model=FirebaseAuthResponse)
-#async def firebase_login(auth_request: FirebaseAuthRequest):
-#    # Firebase auth logic here
-#    pass
-#
-#@router.post("/auth/firebase/register", response_model=UserResponse)
-#async def register_user(user: UserCreate, repo: UserRepository = Depends()):
-#    return await repo.create_user(user)
-#@router.post("/auth/firebase/verify-email")
-#async def verify_email(
-#    user: UserResponse = Depends(get_current_user),
-#    repo: UserRepository = Depends()
-#):
-#    return await repo.verify_user_email(user.id)
-## User endpoints
-#@router.get("/users/me", response_model=UserResponse)
-#async def get_current_user_profile(
-#    user: UserResponse = Depends(get_current_user)
-#):
-#    return user
-#
-#@router.put("/users/me", response_model=UserResponse)
-#async def update_current_user_profile(
-#    user_update: UserUpdate,
-#    current_user: UserResponse = Depends(get_current_user),
-#    repo: UserRepository = Depends()
-#):
-#    return await repo.update_user(current_user.id, user_update)
-#
-#@router.get("/users/{user_id}", response_model=UserResponse)
-#async def get_user(
-#    user_id: str,
-#    repo: UserRepository = Depends()
-#):
-#    return await repo.get_user(user_id)
-#
-#@router.get("/users", response_model=Dict)
-#async def list_users(
-#    page: int = Query(1, ge=1),
-#    per_page: int = Query(20, ge=1, le=100),
-#    filters: Optional[Dict] = None,
-#    repo: UserRepository = Depends(),
-#    _: UserResponse = Depends(get_admin_user)
-#):
-#    return await repo.list_users(page, per_page, filters)
-#
-#@router.put("/users/{user_id}", response_model=UserResponse)
-#async def update_user(
-#    user_id: str,
-#    user_update: UserUpdate,
-#    repo: UserRepository = Depends(),
-#    _: UserResponse = Depends(get_admin_user)
-#):
-#    return await repo.update_user(user_id, user_update)
-#
-#@router.delete("/users/{user_id}")
-#async def delete_user(
-#    user_id: str,
-#    repo: UserRepository = Depends(),
-#    _: UserResponse = Depends(get_admin_user)
-#):
-#    await repo.delete_user(user_id)
-#    return {"message": "User deleted successfully"}
-#
-## Admin endpoints
-#@router.post("/admin/users/disable")
-#async def disable_user(
-#    user_id: str,
-#    repo: UserRepository = Depends(),
-#    _: UserResponse = Depends(get_admin_user)
-#):
-#    return await repo.disable_user(user_id)
-#
-#@router.post("/admin/users/enable")
-#async def enable_user(
-#    user_id: str,
-#    repo: UserRepository = Depends(),
-#    _: UserResponse = Depends(get_admin_user)
-#):
-#    return await repo.enable_user(user_id)
-#
-#@router.post("/admin/users/roles", response_model=UserResponse)
-#async def update_user_roles(
-#    user_role: UserRole,
-#    repo: UserRepository = Depends(),
-#    _: UserResponse = Depends(get_admin_user)
-#):
-#    return await repo.update_user_roles(user_role.user_id, user_role.roles)
-#
-#@router.get("/admin/users/roles", response_model=List[UserRole])
-#async def list_user_roles(
-#    repo: UserRepository = Depends(),
-#    _: UserResponse = Depends(get_admin_user)
-#):
-#    return await repo.list_user_roles()
-#
-#@router.delete("/admin/users/roles")
-#async def remove_user_roles(
-#    user_id: str,
-#    repo: UserRepository = Depends(),
-#    _: UserResponse = Depends(get_admin_user)
-#):
-#    return await repo.update_user_roles(user_id, [])
+        HTTPException(status_code=404, detail=str(e))
