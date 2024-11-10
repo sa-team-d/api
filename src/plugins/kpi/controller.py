@@ -9,17 +9,12 @@ router = APIRouter(prefix="/api/v1/kpi", tags=["KPI"])
 async def get_all_kpis():
     pass
 
-# create a new KPI
-@router.post("/", status_code=201, summary="Create a new KPI")
-async def create_kpi():
+# get all kpi of a group
+@router.get("/group/", status_code=201, summary="Get all KPIs of a group")
+async def get_kpis_by_group(group_name: str):
     pass
 
-# update a KPI
-@router.put("/{kpi_id}", status_code=201, summary="Update a KPI")
-async def update_kpi():
-    pass
-
-# delete a KPI
-@router.delete("/{kpi_id}", status_code=201, summary="Delete a KPI")
-async def delete_kpi():
+# set threshold for a kpi
+@router.put("/threshold/", status_code=201, summary="Set threshold for a KPI")
+async def set_threshold(kpi_id: str, threshold: float):
     pass

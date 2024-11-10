@@ -7,58 +7,22 @@ from src.plugins.auth.firebase import get_current_user
 router = APIRouter(prefix="/api/v1/reports", tags=["Reports"])
 repository = ReportRepository()
 
-@router.post("/", response_model=Report)
-async def create_report(
-    report: Report,
-    current_user: User = Depends(get_current_user)
-) -> Report:
-    """Create a new report."""
-    return await repository.create_report(report)
+# create report
+@router.post("/", status_code=201, summary="Create a new report")
+async def create_report(user: User = Depends(get_current_user)):
+    pass
 
-@router.get("/{report_id}", response_model=Report)
-async def get_report(
-    report_id: str,
-    current_user: User = Depends(get_current_user)
-) -> Report:
-    """Get a specific report by ID."""
-    return await repository.get_report(report_id)
+# get all reports
+@router.get("/", response_model=List[Report], status_code=201, summary="Get all reports")
+async def get_all_reports(user: User = Depends(get_current_user)):
+    pass
 
-@router.get("/", response_model=Dict[str, List[Report]])
-async def list_reports(
-    page: int = Query(1, ge=1, description="Page number"),
-    per_page: int = Query(20, ge=1, le=100, description="Items per page"),
-    site_id: Optional[str] = Query(None, description="Filter by site ID"),
-    sort: Optional[str] = Query(None, description="Sort field:direction"),
-    include: Optional[str] = Query(None, description="Include related resources"),
-    current_user: User = Depends(get_current_user)
-) -> Dict[str, List[Report]]:
-    """List all reports with pagination and filtering options."""
-    return await repository.list_reports(
-        page=page,
-        per_page=per_page,
-        site_id=site_id
-    )
+# get report by ID
+@router.get("/{report_id}", response_model=Report, status_code=201, summary="Get report by ID")
+async def get_report_by_id(report_id: str, user: User = Depends(get_current_user)):
+    pass
 
-@router.post("/{report_id}/export")
-async def export_report(
-    report_id: str,
-    format: str = Query(..., regex="^(pdf|csv|xlsx)$"),
-    current_user: User = Depends(get_current_user)
-) -> Dict:
-    """Export a report in the specified format."""
-    report = await repository.get_report(report_id)
-    # Implementation for export functionality would go here
-    return {
-        "status": "success",
-        "message": f"Report exported as {format}",
-        "download_url": f"/downloads/reports/{report_id}.{format}"
-    }
-
-@router.delete("/{report_id}")
-async def delete_report(
-    report_id: str,
-    current_user: User = Depends(get_current_user)
-) -> Dict:
-    """Delete a specific report."""
-    # Implementation for delete would go here
-    return {"status": "success", "message": "Report deleted"}
+# get report by time
+@router.get("/time", response_model=List[Report], status_code=201, summary="Get report by time")
+async def get_report_by_time(start_time: str, end_time: str, user: User = Depends(get_current_user)):
+    pass
