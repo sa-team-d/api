@@ -1,4 +1,4 @@
-from src.models import Machine, Kpi, Value, Alarm, Reports, Configuration, KPIGroup
+from src.models import Machine, Kpi, Value, Alarm, Report, Configuration, KPIGroup
 from datetime import datetime
 
 mock_db = {
@@ -9,7 +9,7 @@ mock_db = {
             name="Large Capacity Cutting Machine 1",
             kpi_list=[
                 Kpi(
-                    type="working_time",
+                    kpi_type="working_time",
                     machine_id="ast-yhccl1zjue2t",
                     data=[
                         Value(
@@ -24,7 +24,7 @@ mock_db = {
                     config={}
                 ),
                 Kpi(
-                    type="consumption",
+                    kpi_type="consumption",
                     machine_id="ast-yhccl1zjue2t",
                     data=[
                         Value(
@@ -39,7 +39,7 @@ mock_db = {
                     config={}
                 ),
                 Kpi(
-                    type="cycles",
+                    kpi_type="cycles",
                     machine_id="ast-yhccl1zjue2t",
                     data=[
                         Value(
@@ -61,7 +61,7 @@ mock_db = {
             name="Large Capacity Cutting Machine 2",
             kpi_list=[
                 Kpi(
-                    type="working_time",
+                    kpi_type="working_time",
                     machine_id="ast-yhccl1zjue2t",
                     data=[
                         Value(
@@ -76,7 +76,7 @@ mock_db = {
                     config={}
                 ),
                 Kpi(
-                    type="consumption",
+                    kpi_type="consumption",
                     machine_id="ast-yhccl1zjue2t",
                     data=[
                         Value(
@@ -91,7 +91,7 @@ mock_db = {
                     config={}
                 ),
                 Kpi(
-                    type="cycles",
+                    kpi_type="cycles",
                     machine_id="ast-yhccl1zjue2t",
                     data=[
                         Value(
@@ -113,7 +113,7 @@ mock_db = {
             name="Large Capacity Cutting Machine 3",
             kpi_list=[
                 Kpi(
-                    type="working_time",
+                    kpi_type="working_time",
                     machine_id="ast-yhccl1zjue2t",
                     data=[
                         Value(
@@ -128,7 +128,7 @@ mock_db = {
                     config={}
                 ),
                 Kpi(
-                    type="consumption",
+                    kpi_type="consumption",
                     machine_id="ast-yhccl1zjue2t",
                     data=[
                         Value(
@@ -143,7 +143,7 @@ mock_db = {
                     config={}
                 ),
                 Kpi(
-                    type="cycles",
+                    kpi_type="cycles",
                     machine_id="ast-yhccl1zjue2t",
                     data=[
                         Value(
@@ -170,18 +170,19 @@ mock_db = {
         )
     ],
     "reports": [
-        Reports(
+        Report(
             id="rep-001",
-            type="daily_summary",
+            kpi_type="daily_summary",
             content="Daily machine performance report",
-            date=datetime.strptime("2024-03-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
+            date=datetime.strptime("2024-03-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ"),
+            uid="uid-001"
         )
     ],
     "configurations": [
         Configuration(
             children=[
                 Kpi(
-                    type="consumption",
+                    kpi_type="consumption",
                     machine_id="ast-yhccl1zjue2t",
                     data=[],
                     config={
@@ -199,13 +200,13 @@ mock_db = {
             name="Energy Metrics",
             kpi_list=[
                 Kpi(
-                    type="consumption",
+                    kpi_type="consumption",
                     machine_id="ast-yhccl1zjue2t",
                     data=[],
                     config={}
                 ),
                 Kpi(
-                    type="power",
+                    kpi_type="power",
                     machine_id="ast-yhccl1zjue2t",
                     data=[],
                     config={}

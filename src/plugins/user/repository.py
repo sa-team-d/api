@@ -2,42 +2,25 @@ from os import name
 from typing import List, Dict, Optional
 from fastapi import HTTPException
 from datetime import datetime, timezone
-from .schema import User
+from src.models import User
 
 # mock a user database for now
 users = {
     "k8SM6PwrJ4g663v5uZo8gfC7iND2": User(
         uid="k8SM6PwrJ4g663v5uZo8gfC7iND2",
-        first_name="Marco",
-        last_name="Polo",
+        site= 0,
+        name="Giovanni Bianchi",
         phone_number="1234567890",
         email="smo@example.com",
-        created_at=datetime.now(timezone.utc),
     ),
     "xM2kea8akaOKvYta26NMFBy8YnJ3": User(
         uid="xM2kea8akaOKvYta26NMFBy8YnJ3",
-        first_name="Foo",
-        last_name="Bar",
+        name="Mario Rossi",
+        site= 1,
         phone_number="0987654321",
         email="ffm@example.com",
-        created_at=datetime.now(timezone.utc),
     )
 }
-
-# add user info from decoded firebase token to the database
-async def add_user_to_db(uid: str, first_name: str, last_name: str, email: str, phone_number: str):
-    user = User(
-        uid=uid,
-        first_name=first_name,
-        last_name=last_name,
-        phone_number=phone_number,
-        email=email,
-    )
-    if uid in users:
-        raise HTTPException(status_code=400, detail="User already exists")
-    else:
-        users[uid] = user
-        return user
 
 async def get_user(uid: str):
     if uid not in users:

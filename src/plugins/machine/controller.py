@@ -19,9 +19,14 @@ async def get_all_machines(user=Depends(verify_firebase_token)):
     #    #raise HTTPException(status_code=500, detail=str(e))
 
 # filter
-@router.post("/filter", response_model=list[Machine], status_code=201, summary="Filter machines by type")
-async def filter_machines(user=Depends(verify_firebase_token), machine_type: str = Query(..., title="The type of the machine")):
-    pass
+@router.post("/filter", response_model=list[Machine], status_code=201, summary="Filter machines by type or name")
+async def filter_machines(user=Depends(verify_firebase_token), machine_name: str = None, machine_type: str = None):
+    if machine_name:
+        # get machine by name
+        pass
+    elif machine_type:
+        # get machine by type
+        pass
     #try:
     #    machines = await get_by_type(machine_type)
     #    return {"machines": machines}
@@ -30,18 +35,10 @@ async def filter_machines(user=Depends(verify_firebase_token), machine_type: str
 
 # get machine by ID
 @router.get("/{machine_id}", response_model=Machine, status_code=201, summary="Get machine by ID")
-async def get_machine_by_id(
-    machine_id: str = Path(..., title="The ID of the machine"),
-    user=Depends(verify_firebase_token)
-):
+async def get_machine_by_id( user=Depends(verify_firebase_token) ):
     pass
     #try:
     #    machine = await get_by_id(machine_id)
     #    return {"machine": machine}
     #except Exception as e:
     #    raise HTTPException(status_code=500, detail=str(e))
-
-# get machine by name
-@router.get("/name/{machine_name}", response_model=Machine, status_code=201, summary="Get machine by name")
-async def get_machine_by_name():
-    pass

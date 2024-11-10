@@ -7,7 +7,7 @@ from httpx import get
 from .schema import User
 from src.plugins.auth.firebase import verify_firebase_token_and_role, verify_firebase_token
 from src.plugins.auth.auth_utils import get_id_token
-from .repository import add_user_to_db, get_all_users, get_user, update_user_db, get_user_by_email, get_user_by_name
+from .repository import get_all_users, get_user, get_user_by_email, get_user_by_name
 
 router = APIRouter(prefix="/api/v1/user", tags=["User"])
 
@@ -55,37 +55,6 @@ async def get_current_user(user = Depends(verify_firebase_token)):
     """
     u = await get_user(user.get("uid"))
     return {"user": u}
-
-# create a new user with the current user's UID
-@router.post("/")
-async def add_user(first_name: str, last_name: str, email: str, phone_number: str, current_user = Depends(verify_firebase_token)):
-    """
-    Add a new user if the current user is authenticated and it doesn't already exist
-    """
-    try:
-        new_user = await add_user_to_db(uid=current_user.get("uid"), first_name=first_name, last_name=last_name, email=email, phone_number=phone_number)
-        return {"user": new_user}
-    except Exception as e:
-        return {"error": str(e)}
-
-# update the current user's info, u can update optional fields
-@router.put("/")
-async def update_user(first_name: str = None, last_name: str = None, phone_number: str = None, user = Depends(verify_firebase_token)):
-    """
-    Update the current user's info
-    Args:
-        first_name (str): User first name
-        last_name (str): User last name
-        phone_number (str): User phone number
-
-    Returns:
-        dict: Updated user info
-    """
-    try:
-        u = await update_user_db(uid=user.get("uid"), first_name=first_name, last_name=last_name, phone_number=phone_number)
-        return {"user": u}
-    except Exception as e:
-        return {"error": str(e)}
 
 # filter users by name or email
 @router.get("/filter")

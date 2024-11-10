@@ -1,28 +1,32 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
-from typing import Dict, List, Optional
-from src.models import Report, User
-from src.plugins.report.repository import ReportRepository
-from src.plugins.auth.firebase import get_current_user
+from src.models import Report
+from src.plugins.auth.firebase import verify_firebase_token_and_role, verify_firebase_token
+from src.models import User
 
 router = APIRouter(prefix="/api/v1/reports", tags=["Reports"])
-repository = ReportRepository()
 
 # create report
-@router.post("/", status_code=201, summary="Create a new report")
-async def create_report(user: User = Depends(get_current_user)):
+@router.post("/", status_code=201, response_model=Report, summary="Create a new report, save it to the database and return it")
+async def create_report(name: str, site: str, kpi:list[str], frequency: str, user: User = Depends(verify_firebase_token)):
+    if user.role == "SMO":
+        print("SMO Creating report")
+        # create report for a specific site
+        pass
+    elif user.role == "FFM":
+        # create report for a specific site
+        pass
+    else:
+        raise HTTPException(status_code=403, detail="You do not have permission to create a report")
+
+# get all reports from all sites
+@router.get("/", status_code=201, response_model=list[Report], summary="Get all reports created by the user")
+async def get_all_reports(site: str, user: User = Depends(verify_firebase_token_and_role("SMO"))):
+    # check uid creator of the report
     pass
 
-# get all reports
-@router.get("/", response_model=List[Report], status_code=201, summary="Get all reports")
-async def get_all_reports(user: User = Depends(get_current_user)):
-    pass
 
-# get report by ID
-@router.get("/{report_id}", response_model=Report, status_code=201, summary="Get report by ID")
-async def get_report_by_id(report_id: str, user: User = Depends(get_current_user)):
-    pass
-
-# get report by time
-@router.get("/time", response_model=List[Report], status_code=201, summary="Get report by time")
-async def get_report_by_time(start_time: str, end_time: str, user: User = Depends(get_current_user)):
+# filter reports by site
+@router.post("/site", status_code=201, response_model=list[Report], summary="Get all reports for a specific site created by the user")
+async def get_reports_by_site(site: str, user: User = Depends(verify_firebase_token_and_role("SMO"))):
+    # check uid creator of the report
     pass

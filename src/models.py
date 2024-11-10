@@ -9,11 +9,19 @@ from typing import Dict, Optional, Any
 from datetime import date, datetime
 from enum import Enum
 
-class Reports (BaseModel):
+class User(BaseModel):
+    uid: str # The user's ID firebase
+    email: EmailStr
+    site : int # if ffm, else none
+    name: str
+    phone_number: str
+
+class Report (BaseModel):
     id: str
-    type: str
+    kpi_type: str
     content: str
     date: datetime
+    uid: str
 
 class Value(BaseModel):
     machine_id: str
@@ -29,17 +37,13 @@ class Alarm(BaseModel):
     threshold: float
     formula: str
     machine_id: str
+    #uid: str # we need to ensure that only the uid get the alarm
 
 class Kpi(BaseModel):
-    type: str
+    kpi_type: str
     data: list[Value]
     machine_id: str
     config : dict
-
-class Config(BaseModel):
-    children: list[Kpi]
-    formula: str
-    alarms: list[Alarm]
 
 class KPIGroup(BaseModel):
     name: str
