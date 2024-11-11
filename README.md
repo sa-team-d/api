@@ -5,7 +5,7 @@ This repository contains the code for the RESTful API for Industry 5.0 and is pa
 The API is designed following the RESTful principles and uses FastAPI to implement the endpoints. The API is organized in plugins, each containing a set of endpoints related to a specific functionality. The plugins are modular and can be easily extended or modified to add new features or change the existing ones. The API uses Pydantic models to define the request and response formats for the endpoints and provides automatic validation and serialization of the data. The API documentation is generated automatically from the code and provides information about the available endpoints, request and response formats, and examples.
 
 <p align="center">
-	<img src="assets/api-doc/API-arch.svg" alt="API Design" width="60%"/>
+	<img src="assets/api-docs/API-arch.svg" alt="API Design" width="60%"/>
 </p>
 
 All the system components communicate through the API Layer, that ensure consistency and security of the data exchanged.
