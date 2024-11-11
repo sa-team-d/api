@@ -1,64 +1,35 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
-from typing import Dict, List, Optional
-from src.models import Report, User
-from src.plugins.report.repository import ReportRepository
-from src.plugins.auth.dependencies import get_current_user
+from fastapi import APIRouter, HTTPException, Depends
+from src.models import Report
+from src.plugins.auth.firebase import verify_firebase_token_and_role, verify_firebase_token
+from src.models import User
 
-router = APIRouter(prefix="/api/v1/reports", tags=["Reports"])
-repository = ReportRepository()
+import os
+API_VERSION = os.getenv("VERSION")
 
-@router.post("/", response_model=Report)
-async def create_report(
-    report: Report,
-    current_user: User = Depends(get_current_user)
-) -> Report:
-    """Create a new report."""
-    return await repository.create_report(report)
+router = APIRouter(prefix=f"/api/{API_VERSION}/report", tags=["Report"])
 
-@router.get("/{report_id}", response_model=Report)
-async def get_report(
-    report_id: str,
-    current_user: User = Depends(get_current_user)
-) -> Report:
-    """Get a specific report by ID."""
-    return await repository.get_report(report_id)
+# create report
+@router.post("/", status_code=201, response_model=Report, summary="Create a new report, save it to the database and return it")
+async def create_report(name: str, site: str, kpi:str, frequency: str, user: User = Depends(verify_firebase_token)):
+    if user.role == "SMO":
+        print("SMO Creating report")
+        # create report for a specific site
+        pass
+    elif user.role == "FFM":
+        # create report for a specific site
+        pass
+    else:
+        raise HTTPException(status_code=403, detail="You do not have permission to create a report")
 
-@router.get("/", response_model=Dict[str, List[Report]])
-async def list_reports(
-    page: int = Query(1, ge=1, description="Page number"),
-    per_page: int = Query(20, ge=1, le=100, description="Items per page"),
-    site_id: Optional[str] = Query(None, description="Filter by site ID"),
-    sort: Optional[str] = Query(None, description="Sort field:direction"),
-    include: Optional[str] = Query(None, description="Include related resources"),
-    current_user: User = Depends(get_current_user)
-) -> Dict[str, List[Report]]:
-    """List all reports with pagination and filtering options."""
-    return await repository.list_reports(
-        page=page,
-        per_page=per_page,
-        site_id=site_id
-    )
+# get all reports from all sites
+@router.get("/", status_code=200, response_model=list[Report], summary="Get all reports created by the user")
+async def get_all_reports(site: str, user: User = Depends(verify_firebase_token_and_role)):
+    # check uid creator of the report
+    pass
 
-@router.post("/{report_id}/export")
-async def export_report(
-    report_id: str,
-    format: str = Query(..., regex="^(pdf|csv|xlsx)$"),
-    current_user: User = Depends(get_current_user)
-) -> Dict:
-    """Export a report in the specified format."""
-    report = await repository.get_report(report_id)
-    # Implementation for export functionality would go here
-    return {
-        "status": "success",
-        "message": f"Report exported as {format}",
-        "download_url": f"/downloads/reports/{report_id}.{format}"
-    }
 
-@router.delete("/{report_id}")
-async def delete_report(
-    report_id: str,
-    current_user: User = Depends(get_current_user)
-) -> Dict:
-    """Delete a specific report."""
-    # Implementation for delete would go here
-    return {"status": "success", "message": "Report deleted"}
+# filter reports by site
+@router.get("/filter", status_code=200, response_model=list[Report], summary="Get all reports for a specific site created by the user")
+async def get_reports_by_site(site: str, user: User = Depends(verify_firebase_token_and_role("SMO"))):
+    # check uid creator of the report
+    pass
