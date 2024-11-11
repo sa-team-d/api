@@ -10,6 +10,7 @@ from src.plugins.user import controller as user_controller
 from src.plugins.kpi import controller as kpi_controller
 from src.plugins.report import controller as report_controller
 from utils import description
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 from src.config.firebase_config import initialize_firebase
 
@@ -32,6 +33,9 @@ app = FastAPI(
     docs_url=f"/api/{API_VERSION}/docs",
     redoc_url=f"/api/{API_VERSION}/redoc",
 )
+
+# Add this in production to force https redirection
+#app.add_middleware(HTTPSRedirectMiddleware)
 
 @app.get("/", summary="Redirect to Swagger docs")
 async def redirect_to_docs():

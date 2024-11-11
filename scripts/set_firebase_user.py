@@ -31,7 +31,7 @@ def set_smo_role(uid):
 uid1 = "k8SM6PwrJ4g663v5uZo8gfC7iND2"
 uid2 = "xM2kea8akaOKvYta26NMFBy8YnJ3"
 
-set_smo_role(uid1)
-set_ffm_role(uid2)
+#set_smo_role(uid1)
+#set_ffm_role(uid2)
 
 print("UIDs:", uid1, uid2)

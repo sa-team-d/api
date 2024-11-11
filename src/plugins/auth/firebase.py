@@ -16,7 +16,7 @@ def verify_firebase_token(credentials: HTTPAuthorizationCredentials = Depends(se
         decoded_token = auth.verify_id_token(credentials.credentials)
         print(f"Decoded token: {decoded_token}")
         # Verify the token with Firebase Admin
-        auth.verify_id_token(credentials.credentials)
+        #auth.verify_id_token(credentials.credentials)
         return decoded_token
     except Exception as e:
         print(f"Error verifying token: {e}")
