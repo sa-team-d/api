@@ -175,8 +175,8 @@
 				"tags": [
 					"User"
 				],
-				"summary": "Authenticate user and get ID token",
-				"description": "TEST ONLY: Authenticate user and get ID token\nArgs:\n    email (str): User email\n    password (str): User password\n\nReturns:\n    dict: ID token if successful, error message otherwise",
+				"summary": "TEST ONLY: Simulate frontend login",
+				"description": "Authenticate user and get firebase ID token",
 				"operationId": "login_api_v1_0_user_login_post",
 				"parameters": [
 					{
@@ -223,6 +223,237 @@
 				}
 			}
 		},
+		"/api/v1.0/user/": {
+			"post": {
+				"tags": [
+					"User"
+				],
+				"summary": "Create a new user",
+				"operationId": "create_user_api_v1_0_user__post",
+				"parameters": [
+					{
+						"name": "name",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "Name"
+						}
+					},
+					{
+						"name": "phone_number",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "Phone Number"
+						}
+					},
+					{
+						"name": "email",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "Email"
+						}
+					},
+					{
+						"name": "site",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "Site"
+						}
+					},
+					{
+						"name": "required_role",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "Required Role"
+						}
+					}
+				],
+				"responses": {
+					"201": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/User"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"get": {
+				"tags": [
+					"User"
+				],
+				"summary": "Get current user",
+				"operationId": "get_current_user_api_v1_0_user__get",
+				"security": [
+					{
+						"HTTPBearer": []
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/User"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1.0/user/{user_id}": {
+			"delete": {
+				"tags": [
+					"User"
+				],
+				"summary": "Delete a user",
+				"operationId": "delete_user_api_v1_0_user__user_id__delete",
+				"parameters": [
+					{
+						"name": "user_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "User Id"
+						}
+					},
+					{
+						"name": "required_role",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "Required Role"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"description": "Successful Response"
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"tags": [
+					"User"
+				],
+				"summary": "Update user info",
+				"operationId": "update_user_api_v1_0_user__user_id__put",
+				"parameters": [
+					{
+						"name": "user_id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "User Id"
+						}
+					},
+					{
+						"name": "name",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "Name"
+						}
+					},
+					{
+						"name": "phone_number",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "Phone Number"
+						}
+					},
+					{
+						"name": "email",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "Email"
+						}
+					},
+					{
+						"name": "site",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "Site"
+						}
+					},
+					{
+						"name": "required_role",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "Required Role"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/User"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/v1.0/user/list": {
 			"get": {
 				"tags": [
@@ -241,32 +472,6 @@
 									},
 									"type": "array",
 									"title": "Response List Users Api V1 0 User List Get"
-								}
-							}
-						}
-					}
-				},
-				"security": [
-					{
-						"HTTPBearer": []
-					}
-				]
-			}
-		},
-		"/api/v1.0/user/": {
-			"get": {
-				"tags": [
-					"User"
-				],
-				"summary": "Get current user",
-				"operationId": "get_current_user_api_v1_0_user__get",
-				"responses": {
-					"200": {
-						"description": "Successful Response",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/User"
 								}
 							}
 						}

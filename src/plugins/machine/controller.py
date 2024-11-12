@@ -22,7 +22,7 @@ async def get_all_machines(user=Depends(verify_firebase_token)):
     #    #raise HTTPException(status_code=500, detail=str(e))
 
 # filter
-@router.post("/filter", response_model=list[Machine], status_code=201, summary="Filter machines by type or name")
+@router.get("/filter", response_model=list[Machine], status_code=201, summary="Filter machines by type or name")
 async def filter_machines(user=Depends(verify_firebase_token), machine_name: str = None, machine_type: str = None):
     if machine_name:
         # get machine by name
