@@ -1,6 +1,5 @@
 # Use an official lightweight Python image.
 FROM --platform=linux/amd64 python:3.10
-
 # Set the working directory to /app
 WORKDIR /app
 # Copy the current directory contents into the container at /app
