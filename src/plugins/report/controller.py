@@ -11,13 +11,16 @@ router = APIRouter(prefix=f"/api/{API_VERSION}/report", tags=["Report"])
 # create report
 @router.post("/", status_code=201, response_model=Report, summary="Create a new report, save it to the database and return it")
 async def create_report(name: str, site: str, kpi:str, frequency: str, user: User = Depends(verify_firebase_token)):
-    if user.role == "SMO":
+    if user.get("role") == "SMO":
         print("SMO Creating report")
         # create report for a specific site
-        pass
-    elif user.role == "FFM":
+        data = f"Prova Report SMO: {name} {site} {kpi} {frequency}"
+        return Report(id=name, kpi_type=kpi, content=data, date="2021-10-10", uid=user.get("uid"))
+    elif user.get("role") == "FFM":
         # create report for a specific site
-        pass
+        # create report for a specific site
+        data = f"Prova Report FFM: {name} {site} {kpi} {frequency}"
+        return Report(id=name, kpi_type=kpi, content=data, date="2021-10-10", uid=user.get("uid"))
     else:
         raise HTTPException(status_code=403, detail="You do not have permission to create a report")
 

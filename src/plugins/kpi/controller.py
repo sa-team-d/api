@@ -29,3 +29,8 @@ async def get_kpis_by_group(kpi_name: str, start_date:str, end_date:str, user=De
 @router.post("/threshold/", status_code=201, summary="Set threshold for a KPI")
 async def set_threshold(kpi_name: str, threshold: float):
     pass
+
+# create a new kpi
+@router.post("/", status_code=201, response_model=Kpi, summary="Create a new KPI")
+async def create_kpi(name: str, description: str, group: str, user=Depends(verify_firebase_token)):
+    pass
