@@ -16,12 +16,12 @@ from src.config.firebase_config import initialize_firebase
 
 import logging
 from dotenv import load_dotenv
+load_dotenv(dotenv_path=".env")
 
 logger = logging.getLogger(__name__)
 
 initialize_firebase()
 
-load_dotenv(dotenv_path=".env")
 API_VERSION = os.getenv("VERSION")
 print(API_VERSION)
 print(API_VERSION)
