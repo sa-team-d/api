@@ -1,0 +1,14 @@
+# Smart Applications 24/25 course
+
+Here are some useful links:
+
+## Machines ontology
+https://ieeexplore.ieee.org/document/1633441
+
+## KPI taxonomy
+Implementation example: [GitHub - BlackCodingKitten/KPI_DB_interface](https://github.com/BlackCodingKitten/KPI_DB_interface)
+
+## KPI ontology
+Article: https://www.sciencedirect.com/science/article/pii/S0167739X1500103X 
+
+Github: https://github.com/KDMG/kpionto
