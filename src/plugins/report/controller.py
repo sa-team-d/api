@@ -26,12 +26,10 @@ async def create_report(name: str, site: str, kpi:str, frequency: str, user: Use
 
 # get all reports from all sites
 @router.get("/", status_code=200, response_model=list[Report], summary="Get all reports created by the user")
-async def get_all_reports(site: str, user: User = Depends(verify_firebase_token_and_role)):
-    # check uid creator of the report
-    pass
+async def get_all_reports(site: str, user: User = Depends(verify_firebase_token)):
+    raise HTTPException(status_code=404, detail="Not implemented")
 
 # filter reports by site
 @router.get("/filter", status_code=200, response_model=list[Report], summary="Get all reports for a specific site created by the user")
 async def get_reports_by_site(site: str, user: User = Depends(verify_firebase_token_and_role("SMO"))):
-    # check uid creator of the report
-    pass
+    raise HTTPException(status_code=404, detail="Not implemented")

@@ -25,17 +25,17 @@ async def login(email: str, password: str):
 # Create a new user
 @router.post("/", status_code=201, response_model=User, summary="Create a new user")
 async def create_user(name:str, phone_number:str, email:str, site:str, user = Depends(verify_firebase_token_and_role)):
-    pass
+    raise HTTPException(status_code=404, detail="Not implemented")
 
 # delete a user
 @router.delete("/{user_id}", status_code=204, summary="Delete a user")
 async def delete_user(user_id: str, user = Depends(verify_firebase_token_and_role)):
-    pass
+    raise HTTPException(status_code=404, detail="Not implemented")
 
 # update user info
 @router.put("/{user_id}", status_code=200, response_model=User, summary="Update user info")
 async def update_user(user_id: str, name:str, phone_number:str, email:str, site:str, user = Depends(verify_firebase_token_and_role)):
-    pass
+    raise HTTPException(status_code=404, detail="Not implemented")
 
 # list all users
 @router.get("/list",status_code=200, response_model=list[User], summary="List all users")

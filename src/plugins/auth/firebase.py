@@ -12,14 +12,14 @@ def verify_firebase_token(credentials: HTTPAuthorizationCredentials = Depends(se
     Verify the Firebase token and return the decoded token
     """
     try:
-        print(f"Received token: {credentials.credentials}")
+        #print(f"Received token: {credentials.credentials}")
         decoded_token = auth.verify_id_token(credentials.credentials)
-        print(f"Decoded token: {decoded_token}")
+        #print(f"Decoded token: {decoded_token}")
         # Verify the token with Firebase Admin
         #auth.verify_id_token(credentials.credentials)
         return decoded_token
     except Exception as e:
-        print(f"Error verifying token: {e}")
+        #print(f"Error verifying token: {e}")
         raise HTTPException(status_code=401, detail="Invalid Firebase token") from e
 
 #autorization
@@ -29,9 +29,9 @@ def verify_firebase_token_and_role(required_role: str):
     """
     def role_verifier(credentials: HTTPAuthorizationCredentials = Depends(security)):
         try:
-            print(f"Received token: {credentials.credentials}")
+            #print(f"Received token: {credentials.credentials}")
             decoded_token = auth.verify_id_token(credentials.credentials)
-            print(f"Decoded token: {decoded_token}")
+            #print(f"Decoded token: {decoded_token}")
             # Check if user has the required role
             user_role = decoded_token.get("role")
             if user_role != required_role:
