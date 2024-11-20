@@ -1,10 +1,10 @@
 from src import mock_database as database
 from src.models import KPIGroup, Kpi, Value
 
-def get_kpi_names():
+async def get_kpi_names():
     return database.mock_db.get("kpi_groups")
 
-def get_kpi_by_name(name: str):
+async def get_kpi_by_name(name: str):
     kpis = [Kpi(
         kpi_type="working_time",
         machine_id="ast-yhccl1zjue2t",
@@ -36,3 +36,20 @@ def get_kpi_by_name(name: str):
         config={}
     ),]
     return kpis
+
+async def add_kpi(name: str, description: str, group: str):
+    return Kpi(
+        kpi_type="working_time",
+        machine_id="ast-yhccl1zjue2t",
+        data=[
+            Value(
+                machine_id="ast-yhccl1zjue2t",
+                sum=0.0,
+                avg=0.0,
+                min=0.0,
+                max=0.0,
+                var=0.0
+            ),
+        ],
+        config={}
+    )
