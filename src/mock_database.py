@@ -212,6 +212,23 @@ mock_db = {
                     config={}
                 )
             ]
+        ),
+        KPIGroup(
+            name="Performance Metrics",
+            kpi_list=[
+                Kpi(
+                    kpi_type="working_time",
+                    machine_id="ast-yhccl1zjue2t",
+                    data=[],
+                    config={}
+                ),
+                Kpi(
+                    kpi_type="cycles",
+                    machine_id="ast-yhccl1zjue2t",
+                    data=[],
+                    config={}
+                )
+            ]
         )
     ]
 }
