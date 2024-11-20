@@ -1,11 +1,11 @@
 from typing import List
-from sympy import sympify
+from sympy import sympify, zoo
 from src.config.db_config import kpis_collection
-from src.models import KPI, Configuration, ComputedValue
+from .schema import KPI, Configuration, ComputedValue, KPIOverview
 
 def computeKPI(
     machine_id, 
-    kpi, 
+    kpi_name, 
     start_date, 
     end_date, 
     granularity_days, 
@@ -19,35 +19,37 @@ def computeKPI(
     granularity_days: number of days to subaggregate data
     granularity_operation: sum, avg, min, max
     '''
-    kpi_obj = getKPIByName(kpi)
+    kpi_obj = getKPIByName(kpi_name)
+    print(kpi_name)
     if kpi_obj.data == None:
-        return computeCompositeKPI(
+        res = computeCompositeKPI(
             machine_id, 
-            kpi, 
+            kpi_name, 
             start_date, 
             end_date, 
             granularity_days, 
             granularity_op
         )
     else:
-        return computeAtomicKPI(
+        res = computeAtomicKPI(
             machine_id, 
-            kpi, 
+            kpi_name, 
             start_date, 
             end_date, 
             granularity_days, 
             granularity_op
         )
+    return res
 
 def computeCompositeKPI(
     machine_id, 
-    kpi, 
+    kpi_name, 
     start_date, 
     end_date, 
     granularity_days, 
     granularity_op
 ) -> List[ComputedValue]:
-    kpi_obj = getKPIByName(kpi)
+    kpi_obj = getKPIByName(kpi_name)
     children = kpi_obj.config.children
     formula = kpi_obj.config.formula
     values = []
@@ -72,6 +74,8 @@ def computeCompositeKPI(
             symbol_dict[k] = v[k][index].value
         parsed_expression = sympify(formula)
         result = parsed_expression.subs(symbol_dict)
+        if result == zoo:
+            raise Exception('invalid math operation')
         results.append(ComputedValue(value=result))
     return results
 
@@ -156,13 +160,16 @@ def getKPIById(id: str) -> KPI:
     kpi = kpis_collection.find_one({"_id": id})
     return KPI(**kpi)
 
-def listKPIsByNames(names: List[str]) -> List[KPI]:
-    kpis = kpis_collection.find({"name": {"$in": names}})
-    return [KPI(**kpi) for kpi in kpis]
-
-def listKPIsByIds(ids: List[str]) -> List[KPI]:
-    kpis = kpis_collection.find({"_id": {"$in": ids}})
-    return [KPI(**kpi) for kpi in kpis]
+def listKPIs() -> List[KPI]:
+    kpis = kpis_collection.find({}, {
+        "_id": 1,
+        "name": 1,
+        "type": 1,
+        "description": 1,
+        "unite_of_measure": 1,
+    })
+    kpis = [KPIOverview(**kpi) for kpi in kpis]
+    return kpis
 
 def createKPI(
     name: str,

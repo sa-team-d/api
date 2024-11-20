@@ -13,8 +13,8 @@ def checkValidOps(op):
     return False
     
 def computeKPI(
-    name, 
-    kpi,
+    machine_id, 
+    kpi_name,
     start_date,
     end_date,
     granularity_days,
@@ -22,16 +22,23 @@ def computeKPI(
 ):
     if not checkValidOps(granularity_op):
         raise Exception('Not valid op')
-    return repository.computeKPI(name, kpi, start_date, end_date, granularity_days, granularity_op)
+    return repository.computeKPI(machine_id, kpi_name, start_date, end_date, granularity_days, granularity_op)
 
 def getKPIByName(name: str):
-    return repository.getKPIByName(name)
+    kpi = repository.getKPIByName(name)
+    return kpi
 
 def getKPIById(id: str):
     return repository.getKPIById(id)
 
+def listKPIs():
+    return repository.listKPIs()
+
 def createKPI(
     name: str,
+    type: str,
+    description: str,
+    unite_of_measure: str,
     formula: str
 ):
     expr = sympify(formula)
@@ -48,4 +55,4 @@ def createKPI(
     if missing_kpis:
         print(f"The following KPIs are missing from the database: {missing_kpis}")
         raise ValueError("Missing KPIs")
-    repository.createKPI(name, children, formula)
+    repository.createKPI(name, type, description, unite_of_measure, children, formula)

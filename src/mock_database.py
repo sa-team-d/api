@@ -1,4 +1,4 @@
-from src.models import Machine, Kpi, Value, Alarm, Report, Configuration, KPIGroup
+from src.models import Machine, Kpi, Value, Alarm, Report, KPIGroup
 from datetime import datetime
 
 mock_db = {
@@ -35,11 +35,6 @@ mock_db = {
         )
     ],
     "configurations": [
-        Configuration(
-            children=[],
-            formula="consumption_working + consumption_idle",
-            alarms=[]
-        )
     ],
     "kpi_groups": [
         KPIGroup(
