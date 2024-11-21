@@ -56,4 +56,3 @@ def createKPI(
         )
     except:
         raise HTTPException(status_code=400, detail="Error creating kpi")
-      
