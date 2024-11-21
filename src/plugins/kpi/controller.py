@@ -1,41 +1,58 @@
-"""KPI Controller.
-This module contains the KPI API routes.
-"""
-from fastapi import APIRouter, Depends
-from httpx import get
-from src.models import KPIGroup, Kpi
-from src.plugins.auth.firebase import verify_firebase_token
-from src.plugins.kpi.repository import get_kpi_names, get_kpi_by_name, add_kpi
-
 import os
+from . import service
+from typing import List
+from datetime import datetime
+from .schema import ComputedValue, KPI, KPIOverview, CreateKPIBody
+from fastapi import APIRouter, HTTPException
+
 API_VERSION = os.getenv("VERSION")
 
-router = APIRouter(prefix=f"/api/{API_VERSION}/kpi", tags=["KPI"])
+router = APIRouter(prefix=f"/api/{API_VERSION}/kpi", tags=["Machine"])
 
-# name from all kpis
-@router.get("/", status_code=200, response_model=list[KPIGroup], summary="Get all KPIs avaiable")
-async def get_all_kpis(user = Depends(verify_firebase_token)):
-    names = await get_kpi_names()
-    return names
+# Compute kpi
+@router.get("/compute",status_code=200, response_model=list[ComputedValue], summary="Compute the value of the kpi")
+def computeKPI(
+    machine_id: str, 
+    kpi_name: str, 
+    start_date: str,
+    end_date: str,
+    granularity_days: int,
+    granularity_op: str
+):
+    try:
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
+        return service.computeKPI(machine_id, kpi_name, start_date_obj, end_date_obj, granularity_days, granularity_op)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error computing kpi -> {e}")
 
-# get all kpi with a name - select kpi.name
-@router.get("/filter", status_code=200, response_model=list[Kpi], summary="Get all KPIs with a name")
-async def get_kpis_by_group(kpi_name: str, start_date:str, end_date:str, user=Depends(verify_firebase_token), site_name: str = None):
-    if user.get("role") == "FFM":
-        kpis = await get_kpi_by_name(kpi_name)
-        return kpis
-    elif user.get("role") == "SMO":
-        kpis = await get_kpi_by_name(kpi_name)
-        return kpis
+@router.get("/",status_code=200, response_model=List[KPIOverview], summary="List kpis")
+def listKPI():
+    try:
+        return service.listKPIs()
+    except:
+        raise HTTPException(status_code=400, detail="Error list kpi")
 
-# set threshold for a kpi
-@router.post("/threshold/", status_code=201, summary="Set threshold for a KPI")
-async def set_threshold(kpi_name: str, threshold: float):
-    # TODO: add logic to set threshold
-    return {"message": "Threshold set"}
+@router.get("/:id",status_code=200, response_model=KPI, summary="Get kpi by id") 
+def getKPIById(
+    id: str
+):
+    try:
+        return service.getKPIById(id)
+    except:
+        raise HTTPException(status_code=400, detail="Error getting kpi")
 
-# create a new kpi
-@router.post("/", status_code=201, response_model=Kpi, summary="Create a new KPI")
-async def create_kpi(name: str, description: str, group: str, user=Depends(verify_firebase_token)):
-    kpi = await get_kpi_by_name(name)
-    return kpi
+@router.post("/", status_code=200, response_model=KPI, summary="Create kpi")
+def createKPI(
+    item: CreateKPIBody
+):
+    try:
+        service.createKPI(
+            item.name,
+            item.type,
+            item.description,
+            item.unite_of_measure,
+            item.formula
+        )
+    except:
+        raise HTTPException(status_code=400, detail="Error creating kpi")
