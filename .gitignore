@@ -5,3 +5,4 @@ __pycache__
 .pytest_cache
 serviceAccountKey.json
 .DS_Store
+src/.DS_Store
