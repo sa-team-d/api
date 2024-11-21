@@ -1,7 +1,7 @@
-from src.plugin import controller
+from src.plugins.kpi import controller
 
 def working_ratio_definer():
-  
+
     children = []
     kpi = 'working_time'
     res = controller.getKPIByName(kpi)
@@ -14,9 +14,9 @@ def working_ratio_definer():
     name = 'working_ratio'
     formula = 'working_time/offline_time'
     controller.createKPI(name, formula)
-    
+
 def energy_efficiency_definer():
-    
+
     kpi = 'consumption'
     controller.getKPIByName(kpi)
 
@@ -26,13 +26,13 @@ def energy_efficiency_definer():
     name = 'energy_efficiency'
     formula = 'consumption/cycles'
     controller.createKPI(name, formula)
-    
+
 def faulty_kpi_definer():
-    
+
     name = 'faulty_kpi'
     formula = 'bug/cycles'
     controller.createKPI(name, formula)
-    
+
 def filterKPI_example(kpi):
     name = 'ast-yhccl1zjue2t'
     start_date = "2024-09-30 00:00:00"

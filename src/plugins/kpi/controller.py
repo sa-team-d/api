@@ -3,21 +3,23 @@ from . import service
 from typing import List
 from datetime import datetime
 from .schema import ComputedValue, KPI, KPIOverview, CreateKPIBody
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from src.plugins.auth.firebase import verify_firebase_token_and_role, verify_firebase_token
 
 API_VERSION = os.getenv("VERSION")
 
-router = APIRouter(prefix=f"/api/{API_VERSION}/kpi", tags=["Machine"])
+router = APIRouter(prefix=f"/api/{API_VERSION}/kpi", tags=["Kpi"])
 
 # Compute kpi
 @router.get("/compute",status_code=200, response_model=list[ComputedValue], summary="Compute the value of the kpi")
 def computeKPI(
-    machine_id: str, 
-    kpi_name: str, 
+    machine_id: str,
+    kpi_name: str,
     start_date: str,
     end_date: str,
     granularity_days: int,
-    granularity_op: str
+    granularity_op: str,
+    user=Depends(verify_firebase_token)
 ):
     try:
         start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
@@ -27,15 +29,16 @@ def computeKPI(
         raise HTTPException(status_code=400, detail=f"Error computing kpi -> {e}")
 
 @router.get("/",status_code=200, response_model=List[KPIOverview], summary="List kpis")
-def listKPI():
+def listKPI(user=Depends(verify_firebase_token)):
     try:
         return service.listKPIs()
     except:
         raise HTTPException(status_code=400, detail="Error list kpi")
 
-@router.get("/:id",status_code=200, response_model=KPI, summary="Get kpi by id") 
+@router.get("/:id",status_code=200, response_model=KPI, summary="Get kpi by id")
 def getKPIById(
-    id: str
+    id: str,
+    user=Depends(verify_firebase_token)
 ):
     try:
         return service.getKPIById(id)
@@ -44,7 +47,8 @@ def getKPIById(
 
 @router.post("/", status_code=200, response_model=KPI, summary="Create kpi")
 def createKPI(
-    item: CreateKPIBody
+    item: CreateKPIBody,
+    user=Depends(verify_firebase_token)
 ):
     try:
         service.createKPI(
