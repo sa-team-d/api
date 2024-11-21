@@ -7,10 +7,13 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=".env")
 
+deployment_mode = os.getenv("DEPLOYMENT")
+
 FIREBASE_TYPE = os.getenv("FIREBASE_TYPE")
 FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID")
 FIREBASE_PRIVATE_KEY_ID = os.getenv("FIREBASE_PRIVATE_KEY_ID")
-FIREBASE_PRIVATE_KEY = os.getenv("FIREBASE_PRIVATE_KEY").replace("\\n", "\n")
+if deployment_mode: FIREBASE_PRIVATE_KEY = os.getenv("FIREBASE_PRIVATE_KEY")
+else: FIREBASE_PRIVATE_KEY = os.getenv("FIREBASE_PRIVATE_KEY").replace("\\n", "\n")
 FIREBASE_CLIENT_EMAIL = os.getenv("FIREBASE_CLIENT_EMAIL")
 FIREBASE_CLIENT_ID = os.getenv("FIREBASE_CLIENT_ID")
 FIREBASE_AUTH_URI = os.getenv("FIREBASE_AUTH_URI")
