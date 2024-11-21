@@ -15,7 +15,7 @@ from src.config.firebase_config import initialize_firebase
 
 import logging
 from dotenv import load_dotenv
-load_dotenv(dotenv_path=".env")
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
