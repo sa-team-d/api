@@ -4,9 +4,9 @@ from pymongo import MongoClient, errors
 
 load_dotenv()
 
-database_url = os.getenv("DATABASE_URL")
-database_name = os.getenv("DATABASE_NAME")
-debug_mode = os.getenv("DEBUG")
+database_url = 'mongodb+srv://mmattiello2:phXQ49wnP17nthPp@cluster0.qr2kp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0' #os.getenv("DATABASE_URL")
+database_name = 'smart_app'
+debug_mode = True #os.getenv("DEBUG")
 
 try :
     client = MongoClient(database_url)

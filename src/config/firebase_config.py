@@ -2,7 +2,6 @@ import os
 from re import DEBUG
 import firebase_admin
 from firebase_admin import credentials
-from firebase_admin import auth
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -19,8 +18,6 @@ FIREBASE_AUTH_PROVIDER_X509_CERT_URL = os.getenv("FIREBASE_AUTH_PROVIDER_X509_CE
 FIREBASE_CLIENT_X509_CERT_URL = os.getenv("FIREBASE_CLIENT_X509_CERT_URL")
 
 def initialize_firebase():
-
-    # LOAD CREDS FROM DICT OR ENV
     cred = credentials.Certificate({
         "type": f"{FIREBASE_TYPE}",
         "project_id": f"{FIREBASE_PROJECT_ID}",
@@ -41,7 +38,6 @@ def initialize_firebase():
             users = firebase_admin.auth.list_users()
             for user in users.users:
                 print(user.uid)
-            # print the roles of the users in the Firebase project
             for user in users.users:
-                user = auth.get_user(user.uid)
+                user = firebase_admin.auth.get_user(user.uid)
                 print(user.custom_claims)

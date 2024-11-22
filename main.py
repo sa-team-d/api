@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 initialize_firebase()
 
 API_VERSION = os.getenv("VERSION")
-
 app = FastAPI(
     title="Industry 5.0 RESTful API",
     description=description,
