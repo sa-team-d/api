@@ -1,10 +1,19 @@
 from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
 from typing import List
+from src.plugins.kpi.schema import KPIOverview
 
-class Machine(BaseModel):
+class MachineOverview(BaseModel):
     id: PydanticObjectId = Field(alias="_id")
     category: str = Field(...)
     name: str = Field(...)
     asset_id: str = Field(...)
     kpis_ids: List[PydanticObjectId] = Field(...)
+    
+class MachineDetail(BaseModel):
+    id: PydanticObjectId = Field(alias="_id")
+    category: str = Field(...)
+    name: str = Field(...)
+    asset_id: str = Field(...)
+    kpis_ids: List[PydanticObjectId] = Field(...)
+    kpis: List[KPIOverview] = Field(...)

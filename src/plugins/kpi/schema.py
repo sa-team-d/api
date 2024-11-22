@@ -30,6 +30,14 @@ class KPI(BaseModel):
 class ComputedValue(BaseModel):
     value: float = Field(...)
     
+class KPIDetail(BaseModel):
+    id: PydanticObjectId = Field(alias="_id")
+    name: str = Field(...)
+    type: Optional[str] = None
+    description: Optional[str] = None
+    unite_of_measure: Optional[str] = None
+    config: Configuration = Field(...)
+
 class KPIOverview(BaseModel):
     id: PydanticObjectId = Field(alias="_id")
     name: str = Field(...)
