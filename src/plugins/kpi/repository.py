@@ -1,10 +1,12 @@
 from typing import List
 from sympy import sympify, zoo
-from src.config.db_config import kpis_collection
 from .schema import KPI, Configuration, ComputedValue, KPIOverview, KPIDetail
 from bson import ObjectId
 
+from fastapi import Request
+
 def computeKPI(
+    request: Request,
     machine_id, 
     kpi_id, 
     start_date, 
@@ -20,9 +22,10 @@ def computeKPI(
     granularity_days: number of days to subaggregate data
     granularity_operation: sum, avg, min, max
     '''
-    kpi_obj = getKPIById(kpi_id)
+    kpi_obj = getKPIById(request, kpi_id)
     if kpi_obj.config.formula != None:
         res = computeCompositeKPI(
+            request,
             machine_id, 
             kpi_id, 
             start_date, 
@@ -42,6 +45,7 @@ def computeKPI(
     return res
 
 def computeCompositeKPI(
+    request: Request,
     machine_id, 
     kpi_id, 
     start_date, 
@@ -49,12 +53,12 @@ def computeCompositeKPI(
     granularity_days, 
     granularity_op
 ) -> List[ComputedValue]:
-    kpi_obj = getKPIById(kpi_id)
+    kpi_obj = getKPIById(request, kpi_id)
     children = kpi_obj.config.children
     formula = kpi_obj.config.formula
     values = []
     for child in children:
-        kpi_dep = getKPIById(child)
+        kpi_dep = getKPIById(request, child)
         value = computeKPI(
             machine_id,
             kpi_dep.id, 
@@ -80,6 +84,7 @@ def computeCompositeKPI(
     return results
 
 def computeAtomicKPI(
+    request: Request,
     machine_id, 
     kpi_id, 
     start_date, 
@@ -87,6 +92,7 @@ def computeAtomicKPI(
     granularity_days, 
     granularity_op
 ) -> List[ComputedValue]:
+    kpis_collection = request.app.mongodb.get_collection("kpis")
     pipeline = [
         {
             "$match": {
@@ -152,15 +158,18 @@ def computeAtomicKPI(
     ]
     return [ComputedValue(**kpi) for kpi in list(kpis_collection.aggregate(pipeline))]
     
-def getKPIByName(name: str) -> KPI:
+def getKPIByName(request: Request, name: str) -> KPI:
+    kpis_collection = request.app.mongodb.get_collection("kpis")
     kpi = kpis_collection.find_one({"name": name})
     return KPI(**kpi)
 
-def getKPIById(id: str) -> KPIDetail:
+def getKPIById(request: Request, id: str) -> KPIDetail:
+    kpis_collection = request.app.mongodb.get_collection("kpis")
     kpi = kpis_collection.find_one({"_id": ObjectId(id)})
     return KPIDetail(**kpi)
 
-def listKPIs() -> List[KPIOverview]:
+def listKPIs(request: Request) -> List[KPIOverview]:
+    kpis_collection = request.app.mongodb.get_collection("kpis")
     kpis = kpis_collection.find({}, {
         "_id": 1,
         "name": 1,
@@ -171,7 +180,8 @@ def listKPIs() -> List[KPIOverview]:
     kpis = [KPIOverview(**kpi) for kpi in kpis]
     return kpis
 
-def listKPIsByName(names: List[str]) -> List[KPIOverview]:
+def listKPIsByName(request: Request, names: List[str]) -> List[KPIOverview]:
+    kpis_collection = request.app.mongodb.get_collection("kpis")
     kpis = kpis_collection.find(
         { "name": { "$in": names } }, 
         {
@@ -186,6 +196,7 @@ def listKPIsByName(names: List[str]) -> List[KPIOverview]:
     return kpis
 
 def createKPI(
+    request: Request,
     name: str,
     type: str,
     description: str,
@@ -204,4 +215,5 @@ def createKPI(
         )
     )
     kpi = kpis_collection.insert_one(kpi.dict(by_alias=True))
+    kpis_collection = request.app.mongodb.get_collection("kpis")
     return KPI(**kpi)

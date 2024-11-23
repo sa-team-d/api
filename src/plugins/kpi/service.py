@@ -1,3 +1,4 @@
+from fastapi import Request
 from . import repository
 from sympy import sympify
 
@@ -12,7 +13,8 @@ def checkValidOps(op):
         return True
     return False
     
-def computeKPI(
+async def computeKPI(
+    request: Request,
     machine_id, 
     kpi_id,
     start_date,
@@ -22,19 +24,20 @@ def computeKPI(
 ):
     if not checkValidOps(granularity_op):
         raise Exception('Not valid op')
-    return repository.computeKPI(machine_id, kpi_id, start_date, end_date, granularity_days, granularity_op)
+    return await repository.computeKPI(request, machine_id, kpi_id, start_date, end_date, granularity_days, granularity_op)
 
-def getKPIByName(name: str):
-    kpi = repository.getKPIByName(name)
+def getKPIByName(request: Request, name: str):
+    kpi = repository.getKPIByName(request, name)
     return kpi
 
-def getKPIById(id: str):
-    return repository.getKPIById(id)
+def getKPIById(request: Request, id: str):
+    return repository.getKPIById(request, id)
 
-def listKPIs():
-    return repository.listKPIs()
+def listKPIs(request: Request):
+    return repository.listKPIs(request)
 
 def createKPI(
+    request: Request,
     name: str,
     type: str,
     description: str,
@@ -43,7 +46,7 @@ def createKPI(
 ):
     expr = sympify(formula)
     kpis_in_formula = {str(symbol) for symbol in expr.free_symbols}   
-    existing_kpis = repository.listKPIsByName(list(kpis_in_formula))
+    existing_kpis = repository.listKPIsByName(request, list(kpis_in_formula))
 
     existing_kpi_names = set()
     children = []
@@ -55,4 +58,4 @@ def createKPI(
     if missing_kpis:
         print(f"The following KPIs are missing from the database: {missing_kpis}")
         raise ValueError("Missing KPIs")
-    repository.createKPI(name, type, description, unite_of_measure, children, formula)
+    repository.createKPI(request, name, type, description, unite_of_measure, children, formula)

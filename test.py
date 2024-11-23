@@ -1,7 +1,7 @@
 from src.plugins.kpi import controller
 
 def working_ratio_definer():
-
+    
     children = []
     kpi = 'working_time'
     res = controller.getKPIByName(kpi)
