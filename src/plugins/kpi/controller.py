@@ -19,6 +19,7 @@ def http_exception(status_code, detail, e):
 # Compute kpi
 @router.get("/compute",status_code=200, response_model=list[ComputedValue], summary="Compute the value of the kpi")
 def computeKPI(
+    request: Request,
     machine_id: str,
     kpi_id: str,
     start_date: str,
@@ -30,7 +31,7 @@ def computeKPI(
     try:
         start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
         end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
-        return  service.computeKPI(machine_id, kpi_id, start_date_obj, end_date_obj, granularity_days, granularity_op)
+        return  service.computeKPI(request, machine_id, kpi_id, start_date_obj, end_date_obj, granularity_days, granularity_op)
     except Exception as e:
         raise http_exception(400, "Error computing kpi", e)
 

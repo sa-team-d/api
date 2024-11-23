@@ -35,6 +35,7 @@ def computeKPI(
         )
     else:
         res = computeAtomicKPI(
+            request,
             machine_id, 
             kpi_id, 
             start_date, 
@@ -60,6 +61,7 @@ def computeCompositeKPI(
     for child in children:
         kpi_dep = getKPIById(request, child)
         value = computeKPI(
+            request,
             machine_id,
             kpi_dep.id, 
             start_date,
@@ -214,6 +216,6 @@ def createKPI(
             formula=formula
         )
     )
-    kpi = kpis_collection.insert_one(kpi.dict(by_alias=True))
     kpis_collection = request.app.mongodb.get_collection("kpis")
+    kpi = kpis_collection.insert_one(kpi.dict(by_alias=True))
     return KPI(**kpi)

@@ -13,7 +13,7 @@ def checkValidOps(op):
         return True
     return False
     
-async def computeKPI(
+def computeKPI(
     request: Request,
     machine_id, 
     kpi_id,
@@ -24,7 +24,7 @@ async def computeKPI(
 ):
     if not checkValidOps(granularity_op):
         raise Exception('Not valid op')
-    return await repository.computeKPI(request, machine_id, kpi_id, start_date, end_date, granularity_days, granularity_op)
+    return repository.computeKPI(request, machine_id, kpi_id, start_date, end_date, granularity_days, granularity_op)
 
 def getKPIByName(request: Request, name: str):
     kpi = repository.getKPIByName(request, name)

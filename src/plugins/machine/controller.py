@@ -38,7 +38,7 @@ async def filter_machines(request: Request, user=Depends(verify_firebase_token),
 
 # get machine by ID
 @router.get("/{machine_id}", response_model=MachineDetail, status_code=200, summary="Get machine by ID")
-async def get_machine_by_id(request: Request, machine_id: str, user=Depends(verify_firebase_token)):
+async def get_machine_by_id(request: Request, machine_id: str):
     try:
         machine = await get_by_id(request,machine_id)
         return machine
