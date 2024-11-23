@@ -4,6 +4,9 @@ import firebase_admin
 from firebase_admin import credentials
 from dotenv import load_dotenv
 
+import sys
+sys.path.append('.')
+
 load_dotenv()
 
 FIREBASE_TYPE = os.getenv("FIREBASE_TYPE")
