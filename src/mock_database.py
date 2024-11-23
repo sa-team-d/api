@@ -1,21 +1,21 @@
-from src.models import Machine, Kpi, Value, Alarm, Report, KPIGroup
+from src.models import Kpi, Value, Alarm, Report, KPIGroup
 from datetime import datetime
 
 mock_db = {
-    "machines": [
-        Machine(
-            id="ast-yhccl1zjue2t",
-            category="cutting_machines",
-            name="Large Capacity Cutting Machine 1",
-            kpi_list=[]
-        ),
-        Machine(
-            id="ast-yhccl1zjue2t",
-            category="cutting_machines",
-            name="Large Capacity Cutting Machine 2",
-            kpi_list=[]
-        ),
-    ],
+    # "machines": [
+    #     Machine(
+    #         id="ast-yhccl1zjue2t",
+    #         category="cutting_machines",
+    #         name="Large Capacity Cutting Machine 1",
+    #         kpi_list=[]
+    #     ),
+    #     Machine(
+    #         id="ast-yhccl1zjue2t",
+    #         category="cutting_machines",
+    #         name="Large Capacity Cutting Machine 2",
+    #         kpi_list=[]
+    #     ),
+    # ],
     "alarms": [
         Alarm(
             text="High Power Consumption Alert",

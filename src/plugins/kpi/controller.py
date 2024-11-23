@@ -2,7 +2,7 @@ import os
 from . import service
 from typing import List
 from datetime import datetime
-from .schema import ComputedValue, KPI, KPIOverview, CreateKPIBody
+from .schema import ComputedValue, KPIDetail, KPIOverview, CreateKPIBody
 from fastapi import APIRouter, HTTPException, Depends
 from src.plugins.auth.firebase import verify_firebase_token_and_role, verify_firebase_token
 
@@ -14,7 +14,7 @@ router = APIRouter(prefix=f"/api/{API_VERSION}/kpi", tags=["Kpi"])
 @router.get("/compute",status_code=200, response_model=list[ComputedValue], summary="Compute the value of the kpi")
 def computeKPI(
     machine_id: str,
-    kpi_name: str,
+    kpi_id: str,
     start_date: str,
     end_date: str,
     granularity_days: int,
@@ -24,7 +24,7 @@ def computeKPI(
     try:
         start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
         end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
-        return service.computeKPI(machine_id, kpi_name, start_date_obj, end_date_obj, granularity_days, granularity_op)
+        return  service.computeKPI(machine_id, kpi_id, start_date_obj, end_date_obj, granularity_days, granularity_op)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error computing kpi -> {e}")
 
@@ -35,7 +35,7 @@ def listKPI(user=Depends(verify_firebase_token)):
     except:
         raise HTTPException(status_code=400, detail="Error list kpi")
 
-@router.get("/:id",status_code=200, response_model=KPI, summary="Get kpi by id")
+@router.get("/:id",status_code=200, response_model=KPIDetail, summary="Get kpi by id")
 def getKPIById(
     id: str,
     user=Depends(verify_firebase_token)
@@ -45,7 +45,7 @@ def getKPIById(
     except:
         raise HTTPException(status_code=400, detail="Error getting kpi")
 
-@router.post("/", status_code=200, response_model=KPI, summary="Create kpi")
+@router.post("/", status_code=200, response_model=KPIDetail, summary="Create kpi")
 def createKPI(
     item: CreateKPIBody,
     user=Depends(verify_firebase_token)

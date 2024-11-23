@@ -39,7 +39,7 @@ def filterKPI_example(kpi):
     end_date = "2024-10-07 00:00:00"
     days = 7
     ops = 'sum'
-    res = controller.filterKPI(name, kpi, start_date, end_date, days, ops)
+    res = controller.computeKPI(name, kpi, start_date, end_date, days, ops)
     print(res)
 
 if __name__ == '__main__':

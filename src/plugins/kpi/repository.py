@@ -1,11 +1,12 @@
 from typing import List
 from sympy import sympify, zoo
 from src.config.db_config import kpis_collection
-from .schema import KPI, Configuration, ComputedValue, KPIOverview
+from .schema import KPI, Configuration, ComputedValue, KPIOverview, KPIDetail
+from bson import ObjectId
 
 def computeKPI(
     machine_id, 
-    kpi_name, 
+    kpi_id, 
     start_date, 
     end_date, 
     granularity_days, 
@@ -19,12 +20,11 @@ def computeKPI(
     granularity_days: number of days to subaggregate data
     granularity_operation: sum, avg, min, max
     '''
-    kpi_obj = getKPIByName(kpi_name)
-    print(kpi_name)
-    if kpi_obj.data == None:
+    kpi_obj = getKPIById(kpi_id)
+    if kpi_obj.config.formula != None:
         res = computeCompositeKPI(
             machine_id, 
-            kpi_name, 
+            kpi_id, 
             start_date, 
             end_date, 
             granularity_days, 
@@ -33,7 +33,7 @@ def computeKPI(
     else:
         res = computeAtomicKPI(
             machine_id, 
-            kpi_name, 
+            kpi_id, 
             start_date, 
             end_date, 
             granularity_days, 
@@ -43,21 +43,21 @@ def computeKPI(
 
 def computeCompositeKPI(
     machine_id, 
-    kpi_name, 
+    kpi_id, 
     start_date, 
     end_date, 
     granularity_days, 
     granularity_op
 ) -> List[ComputedValue]:
-    kpi_obj = getKPIByName(kpi_name)
+    kpi_obj = getKPIById(kpi_id)
     children = kpi_obj.config.children
     formula = kpi_obj.config.formula
     values = []
     for child in children:
         kpi_dep = getKPIById(child)
         value = computeKPI(
-            machine_id, 
-            kpi_dep.name, 
+            machine_id,
+            kpi_dep.id, 
             start_date,
             end_date,
             granularity_days, 
@@ -81,7 +81,7 @@ def computeCompositeKPI(
 
 def computeAtomicKPI(
     machine_id, 
-    kpi, 
+    kpi_id, 
     start_date, 
     end_date, 
     granularity_days, 
@@ -90,7 +90,7 @@ def computeAtomicKPI(
     pipeline = [
         {
             "$match": {
-                "name": kpi
+                "_id": ObjectId(kpi_id)
             }
         },
         {
@@ -156,11 +156,11 @@ def getKPIByName(name: str) -> KPI:
     kpi = kpis_collection.find_one({"name": name})
     return KPI(**kpi)
 
-def getKPIById(id: str) -> KPI:
-    kpi = kpis_collection.find_one({"_id": id})
-    return KPI(**kpi)
+def getKPIById(id: str) -> KPIDetail:
+    kpi = kpis_collection.find_one({"_id": ObjectId(id)})
+    return KPIDetail(**kpi)
 
-def listKPIs() -> List[KPI]:
+def listKPIs() -> List[KPIOverview]:
     kpis = kpis_collection.find({}, {
         "_id": 1,
         "name": 1,
@@ -168,6 +168,20 @@ def listKPIs() -> List[KPI]:
         "description": 1,
         "unite_of_measure": 1,
     })
+    kpis = [KPIOverview(**kpi) for kpi in kpis]
+    return kpis
+
+def listKPIsByName(names: List[str]) -> List[KPIOverview]:
+    kpis = kpis_collection.find(
+        { "name": { "$in": names } }, 
+        {
+        "_id": 1,
+        "name": 1,
+        "type": 1,
+        "description": 1,
+        "unite_of_measure": 1,
+        }
+    )
     kpis = [KPIOverview(**kpi) for kpi in kpis]
     return kpis
 

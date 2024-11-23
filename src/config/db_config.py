@@ -5,7 +5,7 @@ from pymongo import MongoClient, errors
 load_dotenv()
 
 database_url = os.getenv("DATABASE_URL")
-database_name = os.getenv("DATABASE_NAME")
+database_name = os.getenv("DATABASE")
 debug_mode = os.getenv("DEBUG")
 
 try :

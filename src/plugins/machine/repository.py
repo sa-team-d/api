@@ -2,34 +2,46 @@
 This module contains the repository layer for the machine plugin.
 """
 import sys, os
+from bson import ObjectId
 sys.path.append(os.path.abspath("."))
 from src.mock_database import mock_db
-from src.models import Machine
-
+from .schema import MachineOverview, MachineDetail
+from src.config.db_config import machines_collection
 # list all machines
 async def get_all():
-    return [
-        Machine(
-            id=m.id,
-            category=m.category,
-            name=m.name,
-            kpi_list=m.kpi_list
-        )
-        for m in mock_db["machines"]
-    ]
+    machines = machines_collection.find()
+    return [MachineOverview(**machine) for machine in machines]
 
 # get machine by ID
 async def get_by_id(machine_id: str):
-    machine = next((m for m in mock_db["machines"] if m.id == machine_id), None)
-    if not machine:
+    machines = machines_collection.aggregate(
+    [
+        {
+            "$match":
+            {
+                "_id": ObjectId(machine_id)
+            }
+        },
+        {
+            "$lookup": {
+                "from": "kpis",
+                "localField": "kpis_ids",
+                "foreignField": "_id",
+                "as": "kpis"
+            }
+        }
+    ])
+    machines = list(machines)
+    if len(machines) == 0:
         raise Exception("Machine not found")
-    return machine
+    machine = machines[0]
+    return MachineDetail(**machine)
 
 # get all machine with a specific type
 async def get_by_type(machine_type: str):
-    machines = [m for m in mock_db["machines"] if m.category == machine_type]
-    return machines
+    machines = machines_collection.find({ "type": machine_type })
+    return [MachineOverview(**machine) for machine in machines]
 
 async def get_by_name(machine_name: str):
-    machines = [m for m in mock_db["machines"] if m.name == machine_name]
-    return machines
+    machines = machines_collection.find({ "name": machine_name })
+    return [MachineOverview(**machine) for machine in machines]

@@ -38,12 +38,6 @@ class Alarm(BaseModel):
 class KPIGroup(BaseModel):
     name: str
     kpi_list: list['Kpi']
-
-class Machine(BaseModel):
-    id: str
-    category: str
-    name: str
-    kpi_list: list['Kpi']
     
 
 class Kpi(BaseModel):

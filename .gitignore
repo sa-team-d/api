@@ -6,3 +6,4 @@ __pycache__
 serviceAccountKey.json
 .DS_Store
 src/.DS_Store
+src/import_data
