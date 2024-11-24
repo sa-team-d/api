@@ -78,7 +78,7 @@ async def redirect_to_docs():
 async def redirect_to_redoc():
     return RedirectResponse(url=f"/api/{API_VERSION}/redoc")
 
-@app.get("/health/mongodb", summary="Check MongoDB connection")
+@app.get("/health/mongodb", summary="Check MongoDB connection", include_in_schema=False)
 async def check_mongodb_connection(request: Request):
 
     if isinstance(request.app.mongodb_obj, SyncDatabase):
@@ -94,7 +94,8 @@ async def check_mongodb_connection(request: Request):
 @app.get(
         "/mongodb/list_all_data", 
         summary="List all data in MongoDB",
-        response_class=HTMLResponse
+        response_class=HTMLResponse,
+        include_in_schema=False
     
     )
 async def list_all_data(request: Request):
