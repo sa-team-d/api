@@ -7,199 +7,468 @@
 	},
 	"item": [
 		{
-			"name": "New Request",
-			"event": [
+			"name": "KPI/Machine",
+			"item": [
 				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"firebase_url = pm.collectionVariables.get(\"firebase_url\");",
-							"firebase_web_api_key = pm.collectionVariables.get(\"firebase_web_api_key\")",
-							"",
-							"body = JSON.stringify({",
-							"    email: pm.collectionVariables.get(\"ffm_email\"),",
-							"    password: pm.collectionVariables.get(\"ffm_pass\"),",
-							"    returnSecureToken: true",
-							"})",
-							"",
-							"postRequest = {",
-							"    url: firebase_url + \":signInWithPassword?key=\" + firebase_web_api_key,",
-							"    method: \"POST\",",
-							"    body: body,",
-							"    headers: {",
-							"        \"Content-type\": \"application/json; charset=UTF-8\"",
-							"    }",
-							"}",
-							"",
-							"pm.sendRequest(postRequest, (error, response) => {",
-							"    if (error) {",
-							"        console.log(error)",
-							"    } else {",
-							"        resp = response.json()",
-							"        token = resp[\"idToken\"]",
-							"        pm.collectionVariables.set(\"Token\", token)",
-							"    }",
-							"});",
-							""
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
+					"name": "KPI create",
+					"event": [
 						{
-							"key": "token",
-							"value": "{{Token}}",
-							"type": "string"
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"firebase_url = pm.collectionVariables.get(\"firebase_url\");",
+									"firebase_web_api_key = pm.collectionVariables.get(\"firebase_web_api_key\")",
+									"",
+									"body = JSON.stringify({",
+									"    email: pm.collectionVariables.get(\"ffm_email\"),",
+									"    password: pm.collectionVariables.get(\"ffm_pass\"),",
+									"    returnSecureToken: true",
+									"})",
+									"",
+									"postRequest = {",
+									"    url: firebase_url + \":signInWithPassword?key=\" + firebase_web_api_key,",
+									"    method: \"POST\",",
+									"    body: body,",
+									"    headers: {",
+									"        \"Content-type\": \"application/json; charset=UTF-8\"",
+									"    }",
+									"}",
+									"",
+									"pm.sendRequest(postRequest, (error, response) => {",
+									"    if (error) {",
+									"        console.log(error)",
+									"    } else {",
+									"        resp = response.json()",
+									"        token = resp[\"idToken\"]",
+									"        pm.collectionVariables.set(\"Token\", token)",
+									"    }",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
 						}
-					]
-				},
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"name\": \"test_kpi\",\n    \"type\": \"atomic\",\n    \"description\": \"Test KPI\",\n    \"unite_of_measure\": \"units\",\n    \"formula\": \"consumption/cycles\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8000/api/v1.0/kpi",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
 					],
-					"port": "8000",
-					"path": [
-						"api",
-						"v1.0",
-						"kpi"
-					]
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"test_kpi\",\n    \"type\": \"atomic\",\n    \"description\": \"Test KPI\",\n    \"unite_of_measure\": \"units\",\n    \"formula\": \"consumption/cycles\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/kpi",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"kpi"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete by name",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/kpi/:name?name=test_kpi",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"kpi",
+								":name"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "test_kpi"
+								}
+							],
+							"variable": [
+								{
+									"key": "name",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "KPI computeAtomicKPI",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/kpi/compute",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"kpi",
+								"compute"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "KPI  computeCompositeKPI",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/kpi/compute?machine_id=ast-yhccl1zjue2t&kpi_id=673c80f2d688f1ba31c15ca6&start_date=2024-09-30 00:00:00&end_date=2024-10-07 00:00:00&granularity_days=7&granularity_op=sum",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"kpi",
+								"compute"
+							],
+							"query": [
+								{
+									"key": "machine_id",
+									"value": "ast-yhccl1zjue2t"
+								},
+								{
+									"key": "kpi_id",
+									"value": "673c80f2d688f1ba31c15ca6"
+								},
+								{
+									"key": "start_date",
+									"value": "2024-09-30 00:00:00"
+								},
+								{
+									"key": "end_date",
+									"value": "2024-10-07 00:00:00"
+								},
+								{
+									"key": "granularity_days",
+									"value": "7"
+								},
+								{
+									"key": "granularity_op",
+									"value": "sum"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "KPY by id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/kpi/:id?id=673c80f2d688f1ba31c15ca6",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"kpi",
+								":id"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "673c80f2d688f1ba31c15ca6"
+								}
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Machine filter",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/machine/filter?machine_name=Laser Cutter",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"machine",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "machine_name",
+									"value": "Laser Cutter"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Machine by id",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "All machines",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
 				}
-			},
-			"response": []
+			]
 		},
 		{
-			"name": "New Request",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{Token}}",
-							"type": "string"
-						}
-					]
+			"name": "User",
+			"item": [
+				{
+					"name": "All users",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
 				},
-				"method": "DELETE",
-				"header": [],
-				"url": {
-					"raw": "http://127.0.0.1:8000/api/v1.0/kpi/:name?name=test_get_kpi",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"v1.0",
-						"kpi",
-						":name"
-					],
-					"query": [
-						{
-							"key": "name",
-							"value": "test_get_kpi"
+				{
+					"name": "User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/user/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"user",
+								""
+							]
 						}
-					],
-					"variable": [
-						{
-							"key": "name",
-							"value": ""
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "New Request",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://127.0.0.1:8000/api/v1.0/kpi/compute",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"v1.0",
-						"kpi",
-						"compute"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Machine filter",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{Token}}",
-							"type": "string"
-						}
-					]
+					},
+					"response": []
 				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://127.0.0.1:8000/api/v1.0/machine/filter?machine_name=Laser Cutter",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"v1.0",
-						"machine",
-						"filter"
-					],
-					"query": [
-						{
-							"key": "machine_name",
-							"value": "Laser Cutter"
+				{
+					"name": "User by name",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/user/filter?first_name=Giovanni&last_name=Bianchi",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"user",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "first_name",
+									"value": "Giovanni"
+								},
+								{
+									"key": "last_name",
+									"value": "Bianchi"
+								}
+							]
 						}
-					]
+					},
+					"response": []
+				},
+				{
+					"name": "User by email",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/user/filter?email=smo@example.com",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"user",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "smo@example.com"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User login",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "User by uid",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
 				}
-			},
-			"response": []
+			]
 		}
 	],
 	"auth": {

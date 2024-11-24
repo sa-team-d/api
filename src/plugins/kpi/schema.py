@@ -1,4 +1,3 @@
-# TODO: Define the schema for the KPI plugin
 from typing import List
 from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
@@ -39,7 +38,12 @@ class KPIOverview(BaseModel):
     description: Optional[str] = None
     unite_of_measure: Optional[str] = None
 
-class KPIDetail(KPIOverview):
+class KPIDetail(BaseModel):
+    id: PydanticObjectId = Field(alias="_id")
+    name: str = Field(...)
+    type: Optional[str] = None
+    description: Optional[str] = None
+    unite_of_measure: Optional[str] = None
     config: Configuration = Field(...)
     
 class CreateKPIBody(BaseModel):

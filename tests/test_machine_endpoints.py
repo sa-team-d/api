@@ -16,10 +16,6 @@ API_VERSION = os.getenv("API_VERSION")
 def auth_headers():
     return {"Authorization": f"Bearer {ffmAuth.token}"}
 
-@pytest.fixture
-def client():
-    return TestClient(BASE_URL)
-
 def test_server_is_up():
     try:
         response = requests.get(f"{BASE_URL}")

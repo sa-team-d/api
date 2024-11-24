@@ -10,12 +10,7 @@ class MachineOverview(BaseModel):
     asset_id: str = Field(...)
     kpis_ids: List[PydanticObjectId] = Field(...)
     
-class MachineDetail(BaseModel):
-    id: PydanticObjectId = Field(alias="_id")
-    category: str = Field(...)
-    name: str = Field(...)
-    asset_id: str = Field(...)
-    kpis_ids: List[PydanticObjectId] = Field(...)
+class MachineDetail(MachineOverview):
     kpis: List[KPIOverview] = Field(...)
 
 

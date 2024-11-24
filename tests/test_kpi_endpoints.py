@@ -18,9 +18,6 @@ API_VERSION = os.getenv("API_VERSION")
 def auth_headers():
     return {"Authorization": f"Bearer {ffmAuth.token}"}
 
-@pytest.fixture
-def client():
-    return TestClient(BASE_URL)
 
 
 def test_server_is_up():
@@ -109,7 +106,7 @@ def test_get_kpi_by_id(auth_headers):
         headers=auth_headers
     )
 
-def test_compute_kpi(auth_headers):
+def test_compute_kpi_atomic(auth_headers):
     # Create test KPI with sample data
 
     params = {
@@ -135,6 +132,30 @@ def test_compute_kpi(auth_headers):
     assert data[0]["value"] == 82178.0
     assert data[1]["value"] == 21795.0
     
+
+def test_compute_kpi_composite(auth_headers):
+
+    params = {
+        "machine_id": "ast-yhccl1zjue2t",
+        "kpi_id": "673c80f2d688f1ba31c15ca6",
+        "start_date": "2024-09-30 00:00:00",
+        "end_date": "2024-10-07 00:00:00",
+        "granularity_days": 7,
+        "granularity_op": "sum"
+    }
+    
+    response = requests.get(
+        f"{BASE_URL}{API_VERSION}kpi/compute",
+        headers=auth_headers,
+        params=params
+    )
+    data = response.json()['data']
+    assert response.status_code == 200
+    assert isinstance(data, list)
+
+    assert len(data) == 2
+    assert data[0]["value"] == 3.640436235059484e-06
+    assert data[1]["value"] == 1.9069123253897118e-06
 
 def test_invalid_kpi_id(auth_headers):
     params = {

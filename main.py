@@ -14,32 +14,47 @@ from src.plugins.report import controller as report_controller
 from utils import description
 from src.config.firebase_config import initialize_firebase
 from src.config.db_config import AsyncDatabase, SyncDatabase
+from src.utils  import check_db
 
 import logging
 from dotenv import load_dotenv
 load_dotenv()
 
-logger = logging.getLogger(__name__)
+logger = logger = logging.getLogger('uvicorn.error')
+
 
 initialize_firebase()
 
 @asynccontextmanager
 async def startup_shutdown_db(app: FastAPI):
 
-    # async_db_obj = AsyncDatabase()
-    # app.mongodb = async_db_obj.get_db()
-    # app.mongodb_obj = async_db_obj
-    sync_db_obj = SyncDatabase()
-    app.mongodb = sync_db_obj.get_db()
-    app.mongodb_obj = sync_db_obj
+    # sync_db_obj_g8 = SyncDatabase("DATABASE_URL_G8", "DATABASE_NAME_G8")
+    # app.mongodb_g8 = sync_db_obj_g8.get_db()
+    # app.mongodb_g8_obj = sync_db_obj_g8
+    
+    async_db_obj_g8 = AsyncDatabase("DATABASE_URL_G8", "DATABASE_NAME_G8")
+    app.mongodb_g8 = async_db_obj_g8.get_db()
+    app.mongodb_g8_obj = async_db_obj_g8
+
+    # sync_db_obj_g2 = SyncDatabase("DATABASE_URL_G2", "DATABASE_NAME_G2")
+    # app.mongodb_g2 = sync_db_obj_g2.get_db()
+    # app.mongodb_g2_obj = sync_db_obj_g2
+
+    async_db_obj_g2 = AsyncDatabase("DATABASE_URL_G2", "DATABASE_NAME_G2")
+    app.mongodb_g2 = async_db_obj_g2.get_db()
+    app.mongodb_g2_obj = async_db_obj_g2
 
 
     yield
 
-    # async_db_obj.client.close()
-    sync_db_obj.client.close()
+    # sync_db_obj_g8.client.close()
+    # sync_db_obj_g2.client.close()
+
+    async_db_obj_g8.client.close()
+    async_db_obj_g2.client.close()
 
 API_VERSION = os.getenv("VERSION")
+
 app = FastAPI(
     title="Industry 5.0 RESTful API",
     description=description,
@@ -78,28 +93,27 @@ async def redirect_to_docs():
 async def redirect_to_redoc():
     return RedirectResponse(url=f"/api/{API_VERSION}/redoc")
 
-@app.get("/health/mongodb", summary="Check MongoDB connection", include_in_schema=False)
-async def check_mongodb_connection(request: Request):
+@app.get("/health/mongodb", summary="Check MongoDB connection")
+async def check_mongodb_connection(request: Request, version: str = "g8"):
+    if version != "g8" and version != "g2":
+        raise HTTPException(status_code=400, detail="Invalid version")
+    
+    return check_db(request, version)
 
-    if isinstance(request.app.mongodb_obj, SyncDatabase):
-        response = request.app.mongodb_obj.check_mongodb_connection()
-    else:
-        response = await request.app.mongodb_obj.check_mongodb_connection()
-
-    if response["status"] == "ok":
-        return response
-    else:
-        raise HTTPException(status_code=500, detail=response)
+    
 
 @app.get(
         "/mongodb/list_all_data", 
         summary="List all data in MongoDB",
         response_class=HTMLResponse,
-        include_in_schema=False
+        # include_in_schema=False
     
     )
-async def list_all_data(request: Request):
-    return request.app.mongodb_obj.list_all_data()
+async def list_all_data(request: Request, version: str = "g8"):
+    if version != "g8" and version != "g2":
+        raise HTTPException(status_code=400, detail="Invalid version")
+    mongodb_obj = getattr(request.app, f"mongodb_{version}_obj")
+    return await mongodb_obj.list_all_data()
 
 router = APIRouter(prefix=f"/api/{API_VERSION}", tags=["API"])
 

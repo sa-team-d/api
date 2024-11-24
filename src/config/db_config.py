@@ -11,10 +11,8 @@ from dataclasses import dataclass
 
 load_dotenv(dotenv_path=".env")
 
-@dataclass
-class DatabaseConfig:
-    MONGO_URL = os.getenv("DATABASE_URL", "mongodb://localhost:27017")
-    MONGO_DB_NAE = os.getenv("DATABASE_NAME", "smart_app")
+
+    
 
 class DatabaseMixin:
     def get_db(self):
@@ -29,7 +27,7 @@ class DatabaseMixin:
     def get_all_databases(self):
         return self.client.list_database_names()
 
-    def list_all_data(self) -> str:
+    def get_html_style(self) -> str:
         html = '''
         <style>
             :root {
@@ -102,6 +100,97 @@ class DatabaseMixin:
         <div class="container">
         '''
         
+        return html
+    
+class Database:
+    def __init__(self, DATABASE_URL_ENV, DATABASE_NAME_ENV):
+        self.DATABASE_URL = os.getenv(DATABASE_URL_ENV)
+        self.DATABASE_NAME = os.getenv(DATABASE_NAME_ENV)
+
+        if not self.DATABASE_URL:
+            raise ValueError("Database URL is not set")
+        if not self.DATABASE_NAME:
+            raise ValueError("Database name is not set")
+    
+
+class AsyncDatabase(DatabaseMixin, Database):
+    def __init__(self, DATABASE_URL_ENV, DATABASE_NAME_ENV):
+        super().__init__(DATABASE_URL_ENV, DATABASE_NAME_ENV)
+        self.client = motor.motor_asyncio.AsyncIOMotorClient(self.DATABASE_URL)
+        self.db = self.client[self.DATABASE_NAME]
+
+    async def check_mongodb_connection(self):
+        try:
+            await self.client.admin.command("ismaster")
+            all_databases = await self.get_all_databases()
+            return {"status": "ok", "databases": all_databases}
+        except Exception as e:
+            return {"status": "failed", "error": str(e)}
+    
+    async def list_all_data(self):
+        html = self.get_html_style()
+        collections = await self.db.list_collection_names()
+        for collection_name in collections:
+            doc_count = await self.db[collection_name].count_documents({})
+            
+            html += f'''
+            <div class="collection">
+                <div class="collection-header">
+                    <div>Collection: {collection_name}</div>
+                    <div class="collection-stats">
+                        Documents: {doc_count} | ID: {collection_name.lower().replace(" ", "_")}
+                    </div>
+                </div>
+            '''
+            
+            documents = await self.db[collection_name].find({}).to_list(None)
+            if documents:
+                for doc in documents:
+                    doc_id = str(doc['_id'])
+                    # Extract a title field if exists, otherwise use ID
+                    doc_title = doc.get('name', doc.get('title', f'Document {doc_id[:8]}...'))
+                    
+                    # Convert ObjectId to string for JSON serialization
+                    doc['_id'] = doc_id
+                    json_str = json.dumps(doc, indent=2, default=str)
+                    json_str = json_str.replace('<', '&lt;').replace('>', '&gt;')
+                    
+                    html += f'''
+                    <div class="document">
+                        <div class="doc-header">
+                            <div class="ref-id">Reference ID: {doc_id}</div>
+                            <strong>{doc_title}</strong>
+                        </div>
+                        <div class="json">{json_str}</div>
+                    </div>
+                    '''
+            else:
+                html += '<div class="empty">No documents found in this collection</div>'
+            
+            html += '</div>'
+        
+        html += '</div>'
+        return html
+
+class SyncDatabase(DatabaseMixin, Database):
+    def __init__(self, DATABASE_URL_ENV, DATABASE_NAME_ENV):
+        super().__init__(DATABASE_URL_ENV, DATABASE_NAME_ENV)
+
+        self.client = MongoClient(self.DATABASE_URL)
+        self.db = self.client[self.DATABASE_NAME]
+    
+
+    def check_mongodb_connection(self):
+        try:
+            self.client.admin.command("ismaster")
+            return {"status": "ok", "databases": self.get_all_databases()}
+        except Exception as e:
+            return {"status": "failed", "error": str(e)}
+        
+
+    async def list_all_data(self):
+        html = self.get_html_style()
+
         for collection_name in self.db.list_collection_names():
             doc_count = self.db[collection_name].count_documents({})
             
@@ -142,37 +231,7 @@ class DatabaseMixin:
             html += '</div>'
         
         html += '</div>'
-        return html 
-
-class AsyncDatabase(DatabaseMixin):
-    def __init__(self):
-        self.client = motor.motor_asyncio.AsyncIOMotorClient(DatabaseConfig.MONGO_URL)
-        self.db = self.client[DatabaseConfig.MONGO_DB_NAE]
-
-    async def check_mongodb_connection(self):
-        try:
-            await self.client.admin.command("ismaster")
-            all_databases = await self.get_all_databases()
-            return {"status": "ok", "databases": all_databases}
-        except Exception as e:
-            return {"status": "failed", "error": str(e)}
-        
-    async def get_all_databases(self):
-        return await self.client.list_database_names()
-
-
-class SyncDatabase(DatabaseMixin):
-    def __init__(self):
-        self.client = MongoClient(DatabaseConfig.MONGO_URL)
-        self.db = self.client[DatabaseConfig.MONGO_DB_NAE]
-    
-
-    def check_mongodb_connection(self):
-        try:
-            self.client.admin.command("ismaster")
-            return {"status": "ok", "databases": self.get_all_databases()}
-        except Exception as e:
-            return {"status": "failed", "error": str(e)}
+        return html
 
 # Ogni volta che si importa db_config.py, si crea una nuova connessione al database, e non si chiude .
 # import os

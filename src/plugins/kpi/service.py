@@ -15,7 +15,7 @@ def checkValidOps(op):
         return True
     return False
     
-def computeKPI(
+async def computeKPI(
     request: Request,
     machine_id, 
     kpi_id,
@@ -26,19 +26,18 @@ def computeKPI(
 ):
     if not checkValidOps(granularity_op):
         raise Exception('Not valid op')
-    return repository.computeKPI(request, machine_id, kpi_id, start_date, end_date, granularity_days, granularity_op)
+    return await repository.computeKPI(machine_id, kpi_id, start_date, end_date, granularity_days, granularity_op, request=request)
 
-def getKPIByName(request: Request, name: str):
-    kpi = repository.getKPIByName(request, name)
-    return kpi
+async def getKPIByName(request: Request, name: str):
+    return await repository.getKPIByName(name, request=request)
 
-def getKPIById(request: Request, id: str):
-    return repository.getKPIById(request, id)
+async def getKPIById(request: Request, id: str):
+    return await  repository.getKPIById(id, request=request)
 
-def listKPIs(request: Request) -> list[KPIOverview]:
-    return repository.listKPIs(request)
+async def listKPIs(request: Request) -> list[KPIOverview]:
+    return await repository.listKPIs(request=request)
 
-def createKPI(
+async def createKPI(
     request: Request,
     name: str,
     type: str,
@@ -47,8 +46,8 @@ def createKPI(
     formula: str
 ):
     expr = sympify(formula)
-    kpis_in_formula = {str(symbol) for symbol in expr.free_symbols}   
-    existing_kpis = repository.listKPIsByName(request, list(kpis_in_formula))
+    kpis_in_formula = {str(symbol) for symbol in expr.free_symbols}
+    existing_kpis = await repository.listKPIsByName(list(kpis_in_formula), request=request)
 
     existing_kpi_names = set()
     children = []
@@ -60,13 +59,13 @@ def createKPI(
     if missing_kpis:
         print(f"The following KPIs are missing from the database: {missing_kpis}")
         raise ValueError("Missing KPIs")
-    return repository.createKPI(request, name, type, description, unite_of_measure, children, formula)
+    return await repository.createKPI(name, type, description, unite_of_measure, children, formula, request=request)
 
-def deleteKPIByID(request: Request, id: str):
-    return repository.deleteKPIByID(request, id)
+async def deleteKPIByID(request: Request, id: str):
+    return await repository.deleteKPIByID(id, request=request)
 
-def deleteKPIByName(request: Request, name: str):
-    return repository.deleteKPIByName(request, name)
+async def deleteKPIByName(request: Request, name: str):
+    return await repository.deleteKPIByName(name, request=request)
 
-def getKPIByName(request: Request, name: str):
-    return repository.getKPIByName(request, name)
+async def getKPIByName(request: Request, name: str):
+    return await repository.getKPIByName(name, request=request)
