@@ -170,7 +170,7 @@ class SyncDatabase(DatabaseMixin):
     def check_mongodb_connection(self):
         try:
             self.client.admin.command("ismaster")
-            return {"status": "ok"}
+            return {"status": "ok", "databases": self.get_all_databases()}
         except Exception as e:
             return {"status": "failed", "error": str(e)}
 

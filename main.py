@@ -81,7 +81,10 @@ async def redirect_to_redoc():
 @app.get("/health/mongodb", summary="Check MongoDB connection")
 async def check_mongodb_connection(request: Request):
 
-    response = await request.app.mongodb_obj.check_mongodb_connection()
+    if isinstance(request.app.mongodb_obj, SyncDatabase):
+        response = request.app.mongodb_obj.check_mongodb_connection()
+    else:
+        response = await request.app.mongodb_obj.check_mongodb_connection()
 
     if response["status"] == "ok":
         return response
