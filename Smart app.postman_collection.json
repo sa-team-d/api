@@ -1,0 +1,292 @@
+{
+	"info": {
+		"_postman_id": "ebc6cc97-4c80-4e48-8602-a8de35f938e3",
+		"name": "Smart app",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "38799176"
+	},
+	"item": [
+		{
+			"name": "New Request",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"firebase_url = pm.collectionVariables.get(\"firebase_url\");",
+							"firebase_web_api_key = pm.collectionVariables.get(\"firebase_web_api_key\")",
+							"",
+							"body = JSON.stringify({",
+							"    email: pm.collectionVariables.get(\"ffm_email\"),",
+							"    password: pm.collectionVariables.get(\"ffm_pass\"),",
+							"    returnSecureToken: true",
+							"})",
+							"",
+							"postRequest = {",
+							"    url: firebase_url + \":signInWithPassword?key=\" + firebase_web_api_key,",
+							"    method: \"POST\",",
+							"    body: body,",
+							"    headers: {",
+							"        \"Content-type\": \"application/json; charset=UTF-8\"",
+							"    }",
+							"}",
+							"",
+							"pm.sendRequest(postRequest, (error, response) => {",
+							"    if (error) {",
+							"        console.log(error)",
+							"    } else {",
+							"        resp = response.json()",
+							"        token = resp[\"idToken\"]",
+							"        pm.collectionVariables.set(\"Token\", token)",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"test_kpi\",\n    \"type\": \"atomic\",\n    \"description\": \"Test KPI\",\n    \"unite_of_measure\": \"units\",\n    \"formula\": \"consumption/cycles\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/v1.0/kpi",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1.0",
+						"kpi"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "New Request",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/v1.0/kpi/:name?name=test_get_kpi",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1.0",
+						"kpi",
+						":name"
+					],
+					"query": [
+						{
+							"key": "name",
+							"value": "test_get_kpi"
+						}
+					],
+					"variable": [
+						{
+							"key": "name",
+							"value": ""
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "New Request",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/v1.0/kpi/compute",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1.0",
+						"kpi",
+						"compute"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Machine filter",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/v1.0/machine/filter?machine_name=Laser Cutter",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1.0",
+						"machine",
+						"filter"
+					],
+					"query": [
+						{
+							"key": "machine_name",
+							"value": "Laser Cutter"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					"firebase_url = pm.collectionVariables.get(\"firebase_url\");",
+					"firebase_web_api_key = pm.collectionVariables.get(\"firebase_web_api_key\")",
+					"",
+					"body = JSON.stringify({",
+					"    email: pm.collectionVariables.get(\"ffm_email\"),",
+					"    password: pm.collectionVariables.get(\"ffm_pass\"),",
+					"    returnSecureToken: true",
+					"})",
+					"",
+					"postRequest = {",
+					"    url: firebase_url + \":signInWithPassword?key=\" + firebase_web_api_key,",
+					"    method: \"POST\",",
+					"    body: body,",
+					"    headers: {",
+					"        \"Content-type\": \"application/json; charset=UTF-8\"",
+					"    }",
+					"}",
+					"",
+					"pm.sendRequest(postRequest, (error, response) => {",
+					"    if (error) {",
+					"        console.log(error)",
+					"    } else {",
+					"        resp = response.json()",
+					"        token = resp[\"idToken\"]",
+					"        pm.collectionVariables.set(\"Token\", token)",
+					"    }",
+					"});",
+					"",
+					"console.log(\"FFFF\")"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "Token",
+			"value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjkyODg2OGRjNDRlYTZhOThjODhiMzkzZDM2NDQ1MTM2NWViYjMwZDgiLCJ0eXAiOiJKV1QifQ.eyJyb2xlIjoiRkZNIiwiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL3NtYXJ0YXBwLTlmMjg3IiwiYXVkIjoic21hcnRhcHAtOWYyODciLCJhdXRoX3RpbWUiOjE3MzI0NDUwNzEsInVzZXJfaWQiOiJ4TTJrZWE4YWthT0t2WXRhMjZOTUZCeThZbkozIiwic3ViIjoieE0ya2VhOGFrYU9Ldll0YTI2Tk1GQnk4WW5KMyIsImlhdCI6MTczMjQ0NTA3MSwiZXhwIjoxNzMyNDQ4NjcxLCJlbWFpbCI6ImZmbUBleGFtcGxlLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJmZm1AZXhhbXBsZS5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.PzHZd-1dIvqPVcydKEoODm-ZVK6g5So6krotS03HHr1VipwVBTm8QT_uGx5U9ejyMUy_WuK2OBC6yKj3pceexUQsDqN2iV2M_UntYSyqjwbRpUtY5gZk6Iji46Qu2J_xmBxTOixuvg72B4pJaH_aD5WxpF4f_0zJP1_I1TIsjGaRr7ZI8LuIuy0pfytNHfSy7WBgP8n068ncXTA4G_68SJczY1a27GQ0UeQLRP3hKwwnJMOPEAwp3AJvuNDKvQ9ZfNwI39X-AAu-GCIVIgdJ8aFddKuOYeTZhF9CDyndcUaoWdef8e4UR9G6VlbMPFJ7di_ywLp_l8Osgh2R_Mg26g",
+			"type": "string"
+		},
+		{
+			"key": "firebase_url",
+			"value": "https://identitytoolkit.googleapis.com/v1/accounts",
+			"type": "string"
+		},
+		{
+			"key": "firebase_web_api_key",
+			"value": "AIzaSyAtafuH0UtFJpRfa0S3lrR7P0rYgkKDSeQ",
+			"type": "string"
+		},
+		{
+			"key": "ffm_email",
+			"value": "ffm@example.com",
+			"type": "string"
+		},
+		{
+			"key": "ffm_pass",
+			"value": "passwordffm",
+			"type": "string"
+		}
+	]
+}

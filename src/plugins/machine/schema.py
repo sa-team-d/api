@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
-from typing import List
+from typing import List, Optional
 from src.plugins.kpi.schema import KPIOverview
 
 class MachineOverview(BaseModel):
@@ -17,3 +17,9 @@ class MachineDetail(BaseModel):
     asset_id: str = Field(...)
     kpis_ids: List[PydanticObjectId] = Field(...)
     kpis: List[KPIOverview] = Field(...)
+
+
+class MachineResponse(BaseModel):
+    success: bool
+    data: Optional[MachineDetail | List[MachineOverview]]  = None
+    message: Optional[str] = None

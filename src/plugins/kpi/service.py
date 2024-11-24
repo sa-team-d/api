@@ -1,4 +1,6 @@
 from fastapi import Request
+
+from src.plugins.kpi.schema import KPIOverview
 from . import repository
 from sympy import sympify
 
@@ -33,7 +35,7 @@ def getKPIByName(request: Request, name: str):
 def getKPIById(request: Request, id: str):
     return repository.getKPIById(request, id)
 
-def listKPIs(request: Request):
+def listKPIs(request: Request) -> list[KPIOverview]:
     return repository.listKPIs(request)
 
 def createKPI(
@@ -58,4 +60,13 @@ def createKPI(
     if missing_kpis:
         print(f"The following KPIs are missing from the database: {missing_kpis}")
         raise ValueError("Missing KPIs")
-    repository.createKPI(request, name, type, description, unite_of_measure, children, formula)
+    return repository.createKPI(request, name, type, description, unite_of_measure, children, formula)
+
+def deleteKPIByID(request: Request, id: str):
+    return repository.deleteKPIByID(request, id)
+
+def deleteKPIByName(request: Request, name: str):
+    return repository.deleteKPIByName(request, name)
+
+def getKPIByName(request: Request, name: str):
+    return repository.getKPIByName(request, name)

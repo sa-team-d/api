@@ -41,6 +41,7 @@ class KPIGroup(BaseModel):
     
 
 class Kpi(BaseModel):
+    id: str
     kpi_type: str
     data: list[Value]
     machine_id: str

@@ -1,6 +1,9 @@
+
+
 from typing import List
 from sympy import sympify, zoo
 from .schema import KPI, Configuration, ComputedValue, KPIOverview, KPIDetail
+
 from bson import ObjectId
 
 from fastapi import Request
@@ -160,15 +163,15 @@ def computeAtomicKPI(
     ]
     return [ComputedValue(**kpi) for kpi in list(kpis_collection.aggregate(pipeline))]
     
-def getKPIByName(request: Request, name: str) -> KPI:
+def getKPIByName(request: Request, name: str) -> KPIDetail:
     kpis_collection = request.app.mongodb.get_collection("kpis")
     kpi = kpis_collection.find_one({"name": name})
-    return KPI(**kpi)
+    return KPIDetail(**kpi) if kpi else None
 
 def getKPIById(request: Request, id: str) -> KPIDetail:
     kpis_collection = request.app.mongodb.get_collection("kpis")
     kpi = kpis_collection.find_one({"_id": ObjectId(id)})
-    return KPIDetail(**kpi)
+    return KPIDetail(**kpi) if kpi else None
 
 def listKPIs(request: Request) -> List[KPIOverview]:
     kpis_collection = request.app.mongodb.get_collection("kpis")
@@ -205,17 +208,34 @@ def createKPI(
     unite_of_measure: str,
     children: List[str], 
     formula: str
-) -> KPI:
+) -> KPIDetail:
+
+    data = [] # what data should be stored here?
     kpi = KPI(
         name=name,
         type=type,
         description=description,
         unite_of_measure=unite_of_measure,
+        data=data,
         config=Configuration(
             children=children, 
             formula=formula
         )
     )
     kpis_collection = request.app.mongodb.get_collection("kpis")
-    kpi = kpis_collection.insert_one(kpi.dict(by_alias=True))
-    return KPI(**kpi)
+    result = kpis_collection.insert_one(kpi.model_dump(by_alias=True))
+    created_kpi = kpis_collection.find_one({"_id": result.inserted_id})
+
+    return KPIDetail(**created_kpi)
+
+def deleteKPIByID(request: Request, id: str):
+    kpis_collection = request.app.mongodb.get_collection("kpis")
+    result = kpis_collection.delete_one({"_id": ObjectId(id)})
+    return result.deleted_count > 0
+
+def deleteKPIByName(request: Request, name: str):
+    kpis_collection = request.app.mongodb.get_collection("kpis")
+    result = kpis_collection.delete_one({"name": name})
+    return result.deleted_count > 0
+
+
