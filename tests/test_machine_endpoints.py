@@ -6,7 +6,7 @@ import os
 from typing import Generator
 from fastapi.testclient import TestClient
 
-from FFM.test_ffm import ffmAuth
+from define import ffmAuth
 
 logger = logging.getLogger(__name__)
 BASE_URL = os.getenv("BASE_URL")

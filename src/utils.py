@@ -1,34 +1,129 @@
-from fastapi import HTTPException, Request
-from src.config.db_config import SyncDatabase
+import logging
+import os
+
+from fastapi import Request
+
 from pymongo.collection import Collection
 from typing import Optional, Any
 from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection
 
-import logging
-import asyncio
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=".env")
+
+
+
+
+DATABASE_NAME = os.getenv("DATABASE_NAME")
 
 logger = logging.getLogger("uvicorn-error")
 
 
-def check_db(request, version: str):
-    mongodb_obj = getattr(request.app, f"mongodb_{version}_obj")
+async def create_report_collection(request: Request) -> None:
+    # Connect to MongoDB
+    db: AsyncIOMotorDatabase = request.app.mongodb
 
-    if isinstance(mongodb_obj, SyncDatabase):
-        response = mongodb_obj.check_mongodb_connection()
-    else:
-        loop = asyncio.get_event_loop()
-        response = loop.run_until_complete(mongodb_obj.check_mongodb_connection())
-
-    if response["status"] == "ok":
-        return response
-    else:
-        raise HTTPException(status_code=500, detail=response)
+    # Define validator schema
     
+    validator = {
+    '$jsonSchema': {
+        'bsonType': 'object',
+        'required': ['kpi_name', 'content', 'date', 'user_uid', 'asset_id'],
+        'properties': {
+            'kpi_name': {
+                'bsonType': 'string',
+                'description': 'must be a string and is required'
+            },
+            'content': {
+                'bsonType': 'string',
+                'description': 'must be a string and is required'
+            },
+            'date': {
+                'bsonType': 'date',
+                'description': 'must be a date and is required'
+            },
+            'user_uid': {
+                'bsonType': 'string',
+                'description': 'must be a string and is required'
+            },
+            'asset_id': {
+                'bsonType': 'array',
+                'items': {
+                    'bsonType': 'string'
+                },
+                'description': 'must be an array of strings and is required',
+            }
+        }
+    }
+}
+
+    # Create collection with validator
+    try:
+        await db.create_collection('reports', validator=validator)
+        print("Reports collection created with validator")
+    except Exception as e:
+        print(f"Collection already exists: {e}")
+        # Update validator if collection exists
+        await db.command('collMod', 'reports', validator=validator)
+        print("Updated validator for existing collection")
+    return db['reports']
+
+
+async def create_user_collection(request: Request):
+    # Get MongoDB client from request
+    db = request.app.mongodb
+
+    # Define validator schema
+    validator = {
+        '$jsonSchema': {
+            'bsonType': 'object',
+            'required': ['uid', 'email', 'first_name', 'last_name', 'phone_number'],
+            'properties': {
+                'uid': {
+                    'bsonType': 'string',
+                    'description': 'Firebase user ID - must be a string and is required'
+                },
+                'email': {
+                    'bsonType': 'string',
+                    'pattern': '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
+                    'description': 'must be a valid email string and is required'
+                },
+                'site': {
+                    'bsonType': ['int', 'null'],
+                    'description': 'must be an integer or null'
+                },
+                'first_name': {
+                    'bsonType': 'string',
+                    'description': 'must be a string and is required'
+                },
+                'last_name': {
+                    'bsonType': 'string', 
+                    'description': 'must be a string and is required'
+                },
+                'phone_number': {
+                    'bsonType': 'string',
+                    'description': 'must be a string and is required'
+                }
+            }
+        }
+    }
+
+    # Create or update collection with validator
+    try:
+        await db.create_collection('users', validator=validator)
+        print("Users collection created with validator")
+    except Exception as e:
+        print(f"Collection exists, updating validator: {e}")
+        await db.command('collMod', 'users', validator=validator)
+        print("Updated validator for existing collection")
+
+    # Create index on email field
+    await db['users'].create_index('email', unique=True)
+    await db['users'].create_index('uid', unique=True)
+    return db['users']
 
 def get_collection(
     request: Optional[Request] = None,
     any_collection: Optional[Collection[Any]] = None,
-    version_db: Optional[str] = None,
     name: Optional[str] = None
 ) -> AsyncIOMotorCollection:
     """Get MongoDB collection either from request or direct collection reference.
@@ -51,12 +146,11 @@ def get_collection(
     if request is None and any_collection is not None:
         return any_collection
 
-    if not (name and version_db):
-        raise ValueError("Must provide both name and version_db when using request")
+    if name is None and request.app.mongodb is None:
+        raise ValueError("Must provide both name and mongodb when using request")
 
     try:
-        mongodb: AsyncIOMotorDatabase = getattr(request.app, f"mongodb_{version_db}")
-        collection = mongodb.get_collection(name)
+        collection = request.app.mongodb.get_collection(name)
         return collection
     except Exception as e:
         raise ValueError(f"Error getting collection: {e}")

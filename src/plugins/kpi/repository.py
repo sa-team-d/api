@@ -4,6 +4,7 @@ from typing import List
 from sympy import sympify, zoo
 from .schema import KPI, Configuration, ComputedValue, KPIOverview, KPIDetail
 from src.utils import get_collection
+from src.custom_exceptions import KPINotFoundException
 
 from pymongo.collection import Collection
 
@@ -30,9 +31,10 @@ async def computeKPI(
     granularity_days: number of days to subaggregate data
     granularity_operation: sum, avg, min, max
     '''
-    kpis_collection = get_collection(request, kpis_collection, "g8", "kpis")
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
 
     kpi_obj = await getKPIById(kpi_id, request=request, kpis_collection=kpis_collection)
+    
 
     if kpi_obj.config.formula != None:
         res = await computeCompositeKPI(
@@ -180,29 +182,27 @@ async def computeAtomicKPI(
 
     
 async def getKPIByName(name: str, request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> KPIDetail:
-    kpis_collection = get_collection(request, kpis_collection, "g8", "kpis")
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
 
     kpi = await kpis_collection.find_one({"name": name})
     return KPIDetail(**kpi) if kpi else None
 
 async def getKPIById(id: str, request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> KPIDetail | KPIOverview:
 
-    kpis_collection = get_collection(request, kpis_collection, "g8", "kpis")
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
 
     kpi = await kpis_collection.find_one({"_id": ObjectId(id)})
 
     if kpi is None:
-        return None
+        raise KPINotFoundException("KPI not found")
     
-    try:
-        kpi_detail = KPIDetail(**kpi)
-        return kpi_detail
-    except Exception as e:
-        print(e)
-        raise e
+
+    kpi_detail = KPIDetail(**kpi)
+    return kpi_detail
+    
 
 async def listKPIs(request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> List[KPIOverview]:
-    kpis_collection = get_collection(request, kpis_collection, "g8", "kpis")
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
 
     kpis = kpis_collection.find({}, {
         "_id": 1,
@@ -212,11 +212,14 @@ async def listKPIs(request: Request | None = None, kpis_collection: Collection[K
         "unite_of_measure": 1,
     })
     kpis = [KPIOverview(**kpi) async for kpi in kpis]
+
+    if len(kpis) == 0:
+        raise KPINotFoundException("No KPIs found")
     return kpis
 
 async def listKPIsByName(names: List[str], request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> List[KPIOverview]:
     
-    kpis_collection = get_collection(request, kpis_collection, "g8", "kpis")
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
 
 
     kpis = kpis_collection.find(
@@ -231,6 +234,9 @@ async def listKPIsByName(names: List[str], request: Request | None = None, kpis_
     )
 
     kpis = [KPIOverview(**kpi) async for kpi in kpis]
+    if len(kpis) == 0:
+        raise KPINotFoundException("No KPIs found")
+    
     return kpis
 
 async def createKPI(
@@ -243,7 +249,7 @@ async def createKPI(
     request: Request | None = None,
     kpis_collection: Collection[KPI] | None = None
 ) -> KPIDetail:
-    kpis_collection = get_collection(request, kpis_collection, "g8", "kpis")
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
     data = [] # what data should be stored here?
     kpi = KPI(
         name=name,
@@ -263,13 +269,13 @@ async def createKPI(
     return KPIDetail(**created_kpi)
 
 async def deleteKPIByID(id: str, request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> bool:
-    kpis_collection = get_collection(request, kpis_collection, "g8", "kpis")
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
 
     result = await kpis_collection.delete_one({"_id": ObjectId(id)})
     return result.deleted_count > 0
 
 async def deleteKPIByName(name: str, request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> bool:
-    kpis_collection = get_collection(request, kpis_collection, "g8", "kpis")
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
 
     result = await kpis_collection.delete_one({"name": name})
     return result.deleted_count > 0

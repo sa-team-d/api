@@ -58,7 +58,8 @@ def test_filter_users_by_name(auth_headers):
     data = response.json()
     assert data["success"] == True
     assert len(data["data"]) == 1
-    assert data["data"][0]["name"] == "Giovanni Bianchi"
+    assert data["data"][0]["first_name"] == "Giovanni"
+    assert data["data"][0]["last_name"] == "Bianchi"
 
 def test_filter_users_by_email(auth_headers):
     response = req.get(

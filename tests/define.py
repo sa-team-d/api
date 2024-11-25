@@ -51,6 +51,9 @@ class FFMAuth:
     pwd: str
     token: str
 
+class SMOAuth(FFMAuth):
+    pass
+
 
 ffmAuth = FFMAuth()
 ffmAuth.email = 'ffm@example.com'
@@ -58,6 +61,14 @@ ffmAuth.pwd = 'passwordffm'
 response = login(ffmAuth.email, ffmAuth.pwd)
 ffmAuth.uid = response['localId']
 ffmAuth.token = response['idToken']
+
+smoAuth = SMOAuth()
+smoAuth.email = 'smo@example.com'
+smoAuth.pwd = 'passwordsmo'
+response = login(smoAuth.email, smoAuth.pwd)
+smoAuth.uid = response['localId']
+smoAuth.token = response['idToken']
+
 
 
     

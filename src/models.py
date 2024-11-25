@@ -9,15 +9,16 @@ class User(BaseModel):
     uid: str # The user's ID firebase
     email: EmailStr
     site : int # if ffm, else none
-    name: str
+    first_name: str
+    last_name: str
     phone_number: str
 
 class Report (BaseModel):
     id: str
-    kpi_type: str
+    kpi_name: str
     content: str
     date: datetime
-    uid: str
+    user_uid: str
 
 class Value(BaseModel):
     machine_id: str

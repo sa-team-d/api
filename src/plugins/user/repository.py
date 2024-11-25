@@ -3,21 +3,28 @@ from pymongo.collection import Collection
 from datetime import datetime, timezone
 
 from src.plugins.user.schema import User
-from src.utils import get_collection
+from src.utils import create_user_collection, get_collection
 from src.custom_exceptions import  UserNotFoundException
 
-# mock a user database for now
+#To create these users:
+# user_collection = await create_user_collection(request)
+
+# # Insert users
+#result = await user_collection.insert_many([user.model_dump(by_alias=True) for user in users.values()])
+# print(f"Inserted {len(result.inserted_ids)} users")
 users = {
     "k8SM6PwrJ4g663v5uZo8gfC7iND2": User(
         uid="k8SM6PwrJ4g663v5uZo8gfC7iND2",
         site= 0,
-        name="Giovanni Bianchi",
+        first_name="Giovanni",
+        last_name="Bianchi",
         phone_number="1234567890",
         email="smo@example.com",
     ),
     "xM2kea8akaOKvYta26NMFBy8YnJ3": User(
         uid="xM2kea8akaOKvYta26NMFBy8YnJ3",
-        name="Mario Rossi",
+        first_name="Mario",
+        last_name="Rossi",
         site= 1,
         phone_number="0987654321",
         email="ffm@example.com",
@@ -27,7 +34,7 @@ users = {
 async def get_user_by_uid(uid: str, request: Request | None = None, user_collection: Collection[User]| None = None):
 
     # get collection
-    user_collection = get_collection(request=request,  version_db="g8", name="users")
+    user_collection = get_collection(request=request, name="users")
 
     # get user
     user = await user_collection.find_one({"uid": uid})
@@ -39,7 +46,7 @@ async def get_user_by_uid(uid: str, request: Request | None = None, user_collect
 
 
 async def get_user_by_email(email: str, request: Request | None = None, user_collection: Collection[User]| None = None):
-    user_collection = get_collection(request=request,  version_db="g8", name="users")
+    user_collection = get_collection(request=request, name="users")
 
     print(f"email: {email}")
     cursor = user_collection.find({"email": email})
@@ -52,10 +59,10 @@ async def get_user_by_email(email: str, request: Request | None = None, user_col
 
 async def get_user_by_name(first_name: str, last_name: str, request: Request | None = None, user_collection: Collection[User]| None = None):
     
-    user_collection = get_collection(request=request,  version_db="g8", name="users")
+    user_collection = get_collection(request=request, name="users")
 
     # get users
-    cursor = user_collection.find({"name": first_name.strip().title() + " " + last_name.strip().title()})
+    cursor = user_collection.find({"first_name": first_name.strip().title(), "last_name": last_name.strip().title()})
     users = [User(**user) async for user in cursor]
     
     if users is None or len(users) == 0:
@@ -78,7 +85,7 @@ async def update_user_db(uid: str, first_name: str = None, last_name: str = None
 
 async def get_all_users(request: Request | None = None, user_collection: Collection[User]| None = None):
     # get collection
-    user_collection = get_collection(request=request,  version_db="g8", name="users")
+    user_collection = get_collection(request=request, name="users")
 
     # get all users
     users = user_collection.find()

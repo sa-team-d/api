@@ -5,7 +5,6 @@ Contains all the routes for user management.
 from fastapi import APIRouter, Depends, Request
 
 
-from src.models import User
 from src.plugins.auth.firebase import verify_firebase_token_and_role, verify_firebase_token
 from src.plugins.auth.auth_utils import get_uid_and_token
 from .schema import User, UserResponse, UserLogin, UserWithToken
@@ -50,7 +49,6 @@ async def update_user(user_id: str, name:str, phone_number:str, email:str, site:
 async def list_users(request: Request, user = Depends(verify_firebase_token)):
     try:
         users = await repo.get_all_users(request)
-        print(f"Users: {type(users[0])}")
         return UserResponse(success=True, data=users, message="Users listed successfully")
     except Exception as e:
         return UserResponse(success=False, data=None, message=str(e))

@@ -47,7 +47,7 @@ async def listKPI(request: Request, user=Depends(verify_firebase_token)):
         return KPIResponse(success=True, data=all_kpi, message="KPIs listed successfully")
     except Exception as e:
         logger.error(f"Error listing kpis: {e}")
-        return KPIResponse(success=False, data=None, message=f"Error listing kpis: {e}")
+        return KPIResponse(success=False, data=None, message=f"Error listing kpis: {str(e)}")
         
 
 
@@ -73,7 +73,7 @@ async def createKPI(
         return KPIResponse(success=True, data=result, message="KPI created successfully")
     except Exception as e:
         logger.error(f"Error creating kpi: {e}")
-        return KPIResponse(success=False, data=None, message=f"Error creating kpi: {e}")
+        return KPIResponse(success=False, data=None, message=f"Error creating kpi: {str(e)}")
     
 @router.delete("/:id", status_code=200, response_model=KPIResponse, summary="Delete kpi")
 async def deleteKPI(
@@ -90,7 +90,7 @@ async def deleteKPI(
         )
     except Exception as e:
         logger.error(f"Error deleting kpi: {e}")
-        return KPIResponse(success=False, data=None, message=f"Error deleting kpi: {e}")
+        return KPIResponse(success=False, data=None, message=f"Error deleting kpi: {str(e)}")
 
 @router.delete("/:name", status_code=200, response_model=KPIResponse, summary="Delete kpi by name")
 async def deleteKPIByName(
@@ -107,7 +107,7 @@ async def deleteKPIByName(
         )
     except Exception as e:
         logger.error(f"Error deleting kpi: {e}")
-        return KPIResponse(success=False, data=None, message=f"Error deleting kpi: {e}")
+        return KPIResponse(success=False, data=None, message=f"Error deleting kpi: {str(e)}")
 
 
 @router.get("/:name", status_code=200, response_model=KPIResponse, summary="Get kpi by name")
@@ -124,7 +124,7 @@ async def getKPIByName(
         return KPIResponse(success=False, message=f"KPI with name {name} not found")
     except Exception as e:
         logger.error(f"Error getting kpi: {e}")
-        return KPIResponse(success=False, data=None, message=f"Error getting kpi: {e}")
+        return KPIResponse(success=False, data=None, message=f"Error getting kpi: {str(e)}")
 
 @router.get("/:id", status_code=200, response_model=KPIResponse, summary="Get kpi by id")
 async def getKPIById(
@@ -139,4 +139,4 @@ async def getKPIById(
         return KPIResponse(success=False, message=f"KPI with id {id} not found")
     except Exception as e:
         logger.error(f"Error getting kpi: {e}")
-        return  KPIResponse(success=False, data=None, message=f"Error getting kpi: {e}")
+        return  KPIResponse(success=False, data=None, message=f"Error getting kpi: {str(e)}")

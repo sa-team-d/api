@@ -29,10 +29,10 @@ async def get_all_machines(request:Request, user=Depends(verify_firebase_token))
 
 # filter
 @router.get("/filter", response_model=MachineResponse, status_code=201, summary="Filter machines by type or name")
-async def filter_machines(request: Request, user=Depends(verify_firebase_token), machine_name: str = None, machine_type: str = None):
+async def filter_machines(request: Request, machine_name: str = None, machine_type: str = None, user=Depends(verify_firebase_token)):
     try:
         if machine_name:
-            machines = await repository.get_by_name(machine_name, request=request)
+            machines = await repository.get_by_name(machine_name, machine_type=machine_type, request=request)
         elif machine_type:
             machines = await repository.get_by_type(machine_type, request=request)
         else:
