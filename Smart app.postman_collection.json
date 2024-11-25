@@ -7,7 +7,7 @@
 	},
 	"item": [
 		{
-			"name": "KPI/Machine",
+			"name": "KPI",
 			"item": [
 				{
 					"name": "KPI create",
@@ -92,7 +92,7 @@
 					"response": []
 				},
 				{
-					"name": "Delete by name",
+					"name": "KPI by name",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -262,7 +262,7 @@
 					"response": []
 				},
 				{
-					"name": "Machine filter",
+					"name": "All KPIs",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -277,7 +277,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://127.0.0.1:8000/api/v1.0/machine/filter?machine_name=Laser Cutter",
+							"raw": "http://127.0.0.1:8000/api/v1.0/kpi",
 							"protocol": "http",
 							"host": [
 								"127",
@@ -289,29 +289,14 @@
 							"path": [
 								"api",
 								"v1.0",
-								"machine",
-								"filter"
-							],
-							"query": [
-								{
-									"key": "machine_name",
-									"value": "Laser Cutter"
-								}
+								"kpi"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Machine by id",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "All machines",
+					"name": "KPI by name",
 					"request": {
 						"method": "GET",
 						"header": []
@@ -462,6 +447,156 @@
 				},
 				{
 					"name": "User by uid",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Machine",
+			"item": [
+				{
+					"name": "Machine filter by name",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/machine/filter?machine_name=Laser Cutter",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"machine",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "machine_name",
+									"value": "Laser Cutter"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Machine by id",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "All machines",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "Machine filter by type",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/machine/filter?machine_type=placeholder",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"machine",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "machine_type",
+									"value": "placeholder"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Report",
+			"item": [
+				{
+					"name": "All reports (created by user)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/report",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"report"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "By machine_id",
 					"request": {
 						"method": "GET",
 						"header": []
