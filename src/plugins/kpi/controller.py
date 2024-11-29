@@ -19,9 +19,8 @@ router = APIRouter(prefix=f"/api/{API_VERSION}/kpi", tags=["Kpi"])
 
 
 # Compute kpi
-@router.get("/compute",status_code=200, response_model=KPIResponse, summary="Compute the value of the kpi")
-async def computeKPI(
-    request: Request,
+@router.get("/machine/{machine_id}/compute",status_code=200, response_model=KPIResponse, summary="Compute the kpi value associated to machine")
+async def computeKPIByMachine(
     machine_id: str,
     kpi_id: str,
     start_date: str,
@@ -34,11 +33,31 @@ async def computeKPI(
         start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
         end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
 
-        res = await service.computeKPI(request, machine_id, kpi_id, start_date_obj, end_date_obj, granularity_days, granularity_op)
+        res = await service.computeKPIByMachine(machine_id, kpi_id, start_date_obj, end_date_obj, granularity_days, granularity_op)
         return KPIResponse(success=True, data=res, message="KPI computed successfully")
     except Exception as e:
         logger.error(f"Error computing kpi: {e}")
         return KPIResponse(success=False, data=None, message=f"Error computing kpi: {e}")
+
+@router.get("/site/{site_id}/compute",status_code=200, response_model=list[ComputedValue], summary="Compute the value of the kpi associated to site")
+def computeKPIBySite(
+    site_id: int,
+    kpi_id: str,
+    start_date: str,
+    end_date: str,
+    granularity_days: int,
+    granularity_op: str,
+    # user=Depends(verify_firebase_token)
+):
+    try:
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
+        return  service.computeKPIBySite(site_id, kpi_id, start_date_obj, end_date_obj, granularity_days, granularity_op)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error computing kpi -> {e}")
+
+
+
 
 @router.get("/",status_code=200, response_model=KPIResponse, summary="List kpis")
 async def listKPI(request: Request, user=Depends(verify_firebase_token)):
@@ -49,6 +68,17 @@ async def listKPI(request: Request, user=Depends(verify_firebase_token)):
         logger.error(f"Error listing kpis: {e}")
         return KPIResponse(success=False, data=None, message=f"Error listing kpis: {str(e)}")
         
+
+
+@router.get("/:id",status_code=200, response_model=KPIDetail, summary="Get kpi by id")
+def getKPIById(
+    id: str,
+    user=Depends(verify_firebase_token)
+):
+    try:
+        return service.getKPIById(id)
+    except:
+        raise HTTPException(status_code=400, detail="Error getting kpi")
 
 
 @router.post("/", status_code=200, response_model=KPIResponse, summary="Create kpi")

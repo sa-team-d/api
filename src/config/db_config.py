@@ -10,8 +10,6 @@ from dotenv import load_dotenv
 from dataclasses import dataclass
 
 load_dotenv(dotenv_path=".env")
-
-
     
 
 class DatabaseMixin:
