@@ -3,11 +3,11 @@ from fastapi import security
 from firebase_admin import auth
 from fastapi import HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
+from .schema import Auth
 security = HTTPBearer()
 
 #authentication
-def verify_firebase_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+def verify_firebase_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Auth:
     """
     Verify the Firebase token and return the decoded token
     """
@@ -17,8 +17,9 @@ def verify_firebase_token(credentials: HTTPAuthorizationCredentials = Depends(se
         #print(f"Decoded token: {decoded_token}")
         # Verify the token with Firebase Admin
         #auth.verify_id_token(credentials.credentials)
-        return decoded_token
+        return Auth(**decoded_token)
     except Exception as e:
+        print(e)
         #print(f"Error verifying token: {e}")
         raise HTTPException(status_code=401, detail="Invalid Firebase token") from e
 

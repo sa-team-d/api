@@ -2,7 +2,6 @@
 
 from typing import List
 from sympy import sympify, zoo
-from src.config.db_config import kpis_collection, sites_collection
 from .schema import KPI, Configuration, ComputedValue, KPIOverview, KPIDetail
 from src.utils import get_collection
 from src.custom_exceptions import KPINotFoundException
@@ -43,6 +42,7 @@ async def computeKPIByMachine(
             end_date, 
             granularity_days, 
             granularity_op,
+            request,
             kpis_collection
         )
     else:
@@ -53,6 +53,7 @@ async def computeKPIByMachine(
             end_date, 
             granularity_days, 
             granularity_op,
+            request,
             kpis_collection=kpis_collection
         )
     return res
@@ -64,9 +65,10 @@ async def computeCompositeKPIByMachine(
     end_date, 
     granularity_days, 
     granularity_op,
+    request: Request,
     kpis_collection: Collection[KPI]
 ) -> List[ComputedValue]:
-    kpi_obj = await getKPIById(kpi_id, kpis_collection=kpis_collection)
+    kpi_obj = await getKPIById(kpi_id, request, kpis_collection=kpis_collection)
     
 
     if kpi_obj is None:
@@ -77,7 +79,7 @@ async def computeCompositeKPIByMachine(
     formula = kpi_obj.config.formula
     values = []
     for child in children:
-        kpi_dep = await getKPIById(child, kpis_collection=kpis_collection)
+        kpi_dep = await getKPIById(child, request, kpis_collection=kpis_collection)
         value = await computeKPIByMachine(
             machine_id,
             kpi_dep.id, 
@@ -85,6 +87,7 @@ async def computeCompositeKPIByMachine(
             end_date,
             granularity_days, 
             granularity_op,
+            request,
             kpis_collection=kpis_collection
         )
         values.append({ kpi_dep.name: value })
@@ -111,9 +114,11 @@ async def computeAtomicKPIByMachine(
     end_date, 
     granularity_days, 
     granularity_op,
+    request: Request,
     kpis_collection: Collection[KPI]
 
 ) -> List[ComputedValue]:
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
     pipeline = [
         {
             "$match": {
@@ -179,7 +184,6 @@ async def computeAtomicKPIByMachine(
     ]
     return [ComputedValue(**kpi) for kpi in await kpis_collection.aggregate(pipeline).to_list(None)]
 
-    
 async def getKPIByName(name: str, request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> KPIDetail:
     kpis_collection = get_collection(request, kpis_collection, "kpis")
     kpi = await kpis_collection.find_one({"name": name})
@@ -271,11 +275,3 @@ async def deleteKPIByID(id: str, request: Request | None = None, kpis_collection
 
     result = await kpis_collection.delete_one({"_id": ObjectId(id)})
     return result.deleted_count > 0
-
-async def deleteKPIByName(name: str, request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> bool:
-    kpis_collection = get_collection(request, kpis_collection, "kpis")
-
-    result = await kpis_collection.delete_one({"name": name})
-    return result.deleted_count > 0
-
-

@@ -56,5 +56,5 @@ class CreateKPIBody(BaseModel):
 
 class KPIResponse(BaseModel):
     success: bool
-    data: Optional[KPIDetail | List[KPIOverview | ComputedValue]]  = None
+    data: Optional[KPIDetail | List[KPIOverview | ComputedValue]] = None
     message: Optional[str] = None

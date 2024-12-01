@@ -10,3 +10,8 @@ class Site(BaseModel):
     machines_ids: List[PydanticObjectId] = []
     kpis_ids: List[PydanticObjectId] = []
     site_id: int
+    
+class SiteResponse(BaseModel):
+    success: bool
+    data: Optional[Site | List[Site]] = None
+    message: Optional[str] = None
