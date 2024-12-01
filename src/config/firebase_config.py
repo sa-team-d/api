@@ -42,4 +42,5 @@ def initialize_firebase():
             users = firebase_admin.auth.list_users()
             for user in users.users:
                 user = firebase_admin.auth.get_user(user.uid)
-                print(f"User custom claims: {user.custom_claims['role']}")
+                if user.custom_claims:
+                    print(f"User custom claims: {user.custom_claims['role']}")
