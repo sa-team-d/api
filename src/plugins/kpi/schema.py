@@ -1,4 +1,3 @@
-# TODO: Define the schema for the KPI plugin
 from typing import List
 from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
@@ -19,7 +18,6 @@ class Configuration(BaseModel):
     # alarms: list[Alarm]
 
 class KPI(BaseModel):
-    id: PydanticObjectId = Field(alias="_id")
     name: str = Field(...)
     type: Optional[str] = None
     description: Optional[str] = None
@@ -30,13 +28,8 @@ class KPI(BaseModel):
 class ComputedValue(BaseModel):
     value: float = Field(...)
     
-class KPIDetail(BaseModel):
-    id: PydanticObjectId = Field(alias="_id")
-    name: str = Field(...)
-    type: Optional[str] = None
-    description: Optional[str] = None
-    unite_of_measure: Optional[str] = None
-    config: Configuration = Field(...)
+    
+
 
 class KPIOverview(BaseModel):
     id: PydanticObjectId = Field(alias="_id")
@@ -44,6 +37,14 @@ class KPIOverview(BaseModel):
     type: Optional[str] = None
     description: Optional[str] = None
     unite_of_measure: Optional[str] = None
+
+class KPIDetail(BaseModel):
+    id: PydanticObjectId = Field(alias="_id")
+    name: str = Field(...)
+    type: Optional[str] = None
+    description: Optional[str] = None
+    unite_of_measure: Optional[str] = None
+    config: Configuration = Field(...)
     
 class CreateKPIBody(BaseModel):
     name: str
@@ -51,3 +52,9 @@ class CreateKPIBody(BaseModel):
     description: str
     unite_of_measure: str
     formula: str
+
+
+class KPIResponse(BaseModel):
+    success: bool
+    data: Optional[KPIDetail | List[KPIOverview | ComputedValue]]  = None
+    message: Optional[str] = None

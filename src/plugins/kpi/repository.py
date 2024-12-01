@@ -1,16 +1,27 @@
+
+
 from typing import List
 from sympy import sympify, zoo
-from src.config.db_config import kpis_collection
 from .schema import KPI, Configuration, ComputedValue, KPIOverview, KPIDetail
+from src.utils import get_collection
+from src.custom_exceptions import KPINotFoundException
+
+from pymongo.collection import Collection
+
+
 from bson import ObjectId
 
-def computeKPI(
+from fastapi import Request
+
+async def computeKPI(
     machine_id, 
     kpi_id, 
     start_date, 
     end_date, 
     granularity_days, 
-    granularity_op
+    granularity_op,
+    request: Request | None = None,
+    kpis_collection: Collection[KPI] | None = None
 ) -> List[ComputedValue]:
     '''
     machine_id: id of the machine
@@ -20,50 +31,65 @@ def computeKPI(
     granularity_days: number of days to subaggregate data
     granularity_operation: sum, avg, min, max
     '''
-    kpi_obj = getKPIById(kpi_id)
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
+
+    kpi_obj = await getKPIById(kpi_id, request=request, kpis_collection=kpis_collection)
+    
+
     if kpi_obj.config.formula != None:
-        res = computeCompositeKPI(
+        res = await computeCompositeKPI(
             machine_id, 
             kpi_id, 
             start_date, 
             end_date, 
             granularity_days, 
-            granularity_op
+            granularity_op,
+            kpis_collection
         )
     else:
-        res = computeAtomicKPI(
+        res = await computeAtomicKPI(
             machine_id, 
             kpi_id, 
             start_date, 
             end_date, 
             granularity_days, 
-            granularity_op
+            granularity_op,
+            kpis_collection=kpis_collection
         )
     return res
 
-def computeCompositeKPI(
+async def computeCompositeKPI(
     machine_id, 
     kpi_id, 
     start_date, 
     end_date, 
     granularity_days, 
-    granularity_op
+    granularity_op,
+    kpis_collection: Collection[KPI]
 ) -> List[ComputedValue]:
-    kpi_obj = getKPIById(kpi_id)
+    kpi_obj = await getKPIById(kpi_id, kpis_collection=kpis_collection)
+    
+
+    if kpi_obj is None:
+        raise Exception('KPI not found')
+    
+    
     children = kpi_obj.config.children
     formula = kpi_obj.config.formula
     values = []
     for child in children:
-        kpi_dep = getKPIById(child)
-        value = computeKPI(
+        kpi_dep = await getKPIById(child, kpis_collection=kpis_collection)
+        value = await computeKPI(
             machine_id,
             kpi_dep.id, 
             start_date,
             end_date,
             granularity_days, 
-            granularity_op
+            granularity_op,
+            kpis_collection=kpis_collection
         )
         values.append({ kpi_dep.name: value })
+
     value = values[0]
     key = next(iter(value.keys()))
     results = []
@@ -79,13 +105,15 @@ def computeCompositeKPI(
         results.append(ComputedValue(value=result))
     return results
 
-def computeAtomicKPI(
+async def computeAtomicKPI(
     machine_id, 
     kpi_id, 
     start_date, 
     end_date, 
     granularity_days, 
-    granularity_op
+    granularity_op,
+    kpis_collection: Collection[KPI]
+
 ) -> List[ComputedValue]:
     pipeline = [
         {
@@ -150,17 +178,32 @@ def computeAtomicKPI(
             }
         }
     ]
-    return [ComputedValue(**kpi) for kpi in list(kpis_collection.aggregate(pipeline))]
+    return [ComputedValue(**kpi) for kpi in await kpis_collection.aggregate(pipeline).to_list(None)]
+
     
-def getKPIByName(name: str) -> KPI:
-    kpi = kpis_collection.find_one({"name": name})
-    return KPI(**kpi)
+async def getKPIByName(name: str, request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> KPIDetail:
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
 
-def getKPIById(id: str) -> KPIDetail:
-    kpi = kpis_collection.find_one({"_id": ObjectId(id)})
-    return KPIDetail(**kpi)
+    kpi = await kpis_collection.find_one({"name": name})
+    return KPIDetail(**kpi) if kpi else None
 
-def listKPIs() -> List[KPIOverview]:
+async def getKPIById(id: str, request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> KPIDetail | KPIOverview:
+
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
+
+    kpi = await kpis_collection.find_one({"_id": ObjectId(id)})
+
+    if kpi is None:
+        raise KPINotFoundException("KPI not found")
+    
+
+    kpi_detail = KPIDetail(**kpi)
+    return kpi_detail
+    
+
+async def listKPIs(request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> List[KPIOverview]:
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
+
     kpis = kpis_collection.find({}, {
         "_id": 1,
         "name": 1,
@@ -168,10 +211,17 @@ def listKPIs() -> List[KPIOverview]:
         "description": 1,
         "unite_of_measure": 1,
     })
-    kpis = [KPIOverview(**kpi) for kpi in kpis]
+    kpis = [KPIOverview(**kpi) async for kpi in kpis]
+
+    if len(kpis) == 0:
+        raise KPINotFoundException("No KPIs found")
     return kpis
 
-def listKPIsByName(names: List[str]) -> List[KPIOverview]:
+async def listKPIsByName(names: List[str], request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> List[KPIOverview]:
+    
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
+
+
     kpis = kpis_collection.find(
         { "name": { "$in": names } }, 
         {
@@ -182,26 +232,52 @@ def listKPIsByName(names: List[str]) -> List[KPIOverview]:
         "unite_of_measure": 1,
         }
     )
-    kpis = [KPIOverview(**kpi) for kpi in kpis]
+
+    kpis = [KPIOverview(**kpi) async for kpi in kpis]
+    if len(kpis) == 0:
+        raise KPINotFoundException("No KPIs found")
+    
     return kpis
 
-def createKPI(
+async def createKPI(
     name: str,
     type: str,
     description: str,
     unite_of_measure: str,
     children: List[str], 
-    formula: str
-) -> KPI:
+    formula: str,
+    request: Request | None = None,
+    kpis_collection: Collection[KPI] | None = None
+) -> KPIDetail:
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
+    data = [] # what data should be stored here?
     kpi = KPI(
         name=name,
         type=type,
         description=description,
         unite_of_measure=unite_of_measure,
+        data=data,
         config=Configuration(
             children=children, 
             formula=formula
         )
     )
-    kpi = kpis_collection.insert_one(kpi.dict(by_alias=True))
-    return KPI(**kpi)
+    result = await kpis_collection.insert_one(kpi.model_dump(by_alias=True))
+    created_kpi = await kpis_collection.find_one({"_id": result.inserted_id})
+
+
+    return KPIDetail(**created_kpi)
+
+async def deleteKPIByID(id: str, request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> bool:
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
+
+    result = await kpis_collection.delete_one({"_id": ObjectId(id)})
+    return result.deleted_count > 0
+
+async def deleteKPIByName(name: str, request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> bool:
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
+
+    result = await kpis_collection.delete_one({"name": name})
+    return result.deleted_count > 0
+
+

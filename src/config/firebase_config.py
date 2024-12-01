@@ -1,4 +1,6 @@
 import os
+import logging
+
 from re import DEBUG
 import firebase_admin
 from firebase_admin import credentials
@@ -8,6 +10,8 @@ import sys
 sys.path.append('.')
 
 load_dotenv()
+
+logger = logger = logging.getLogger('uvicorn.error')
 
 FIREBASE_TYPE = os.getenv("FIREBASE_TYPE")
 FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID")
@@ -40,7 +44,6 @@ def initialize_firebase():
         if os.getenv("DEBUG"):
             users = firebase_admin.auth.list_users()
             for user in users.users:
-                print(user.uid)
-            for user in users.users:
                 user = firebase_admin.auth.get_user(user.uid)
-                print(user.custom_claims)
+                if user.custom_claims:
+                    print(f"User custom claims: {user.custom_claims['role']}")

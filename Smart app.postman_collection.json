@@ -1,0 +1,696 @@
+{
+	"info": {
+		"_postman_id": "ebc6cc97-4c80-4e48-8602-a8de35f938e3",
+		"name": "Smart app",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "38799176"
+	},
+	"item": [
+		{
+			"name": "KPI",
+			"item": [
+				{
+					"name": "KPI create",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"firebase_url = pm.collectionVariables.get(\"firebase_url\");",
+									"firebase_web_api_key = pm.collectionVariables.get(\"firebase_web_api_key\")",
+									"",
+									"body = JSON.stringify({",
+									"    email: pm.collectionVariables.get(\"ffm_email\"),",
+									"    password: pm.collectionVariables.get(\"ffm_pass\"),",
+									"    returnSecureToken: true",
+									"})",
+									"",
+									"postRequest = {",
+									"    url: firebase_url + \":signInWithPassword?key=\" + firebase_web_api_key,",
+									"    method: \"POST\",",
+									"    body: body,",
+									"    headers: {",
+									"        \"Content-type\": \"application/json; charset=UTF-8\"",
+									"    }",
+									"}",
+									"",
+									"pm.sendRequest(postRequest, (error, response) => {",
+									"    if (error) {",
+									"        console.log(error)",
+									"    } else {",
+									"        resp = response.json()",
+									"        token = resp[\"idToken\"]",
+									"        pm.collectionVariables.set(\"Token\", token)",
+									"    }",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"test_kpi\",\n    \"type\": \"atomic\",\n    \"description\": \"Test KPI\",\n    \"unite_of_measure\": \"units\",\n    \"formula\": \"consumption/cycles\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/kpi",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"kpi"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "KPI by name",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/kpi/:name?name=test_kpi",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"kpi",
+								":name"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "test_kpi"
+								}
+							],
+							"variable": [
+								{
+									"key": "name",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "KPI computeAtomicKPI",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/kpi/compute",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"kpi",
+								"compute"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "KPI  computeCompositeKPI",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/kpi/compute?machine_id=ast-yhccl1zjue2t&kpi_id=673c80f2d688f1ba31c15ca6&start_date=2024-09-30 00:00:00&end_date=2024-10-07 00:00:00&granularity_days=7&granularity_op=sum",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"kpi",
+								"compute"
+							],
+							"query": [
+								{
+									"key": "machine_id",
+									"value": "ast-yhccl1zjue2t"
+								},
+								{
+									"key": "kpi_id",
+									"value": "673c80f2d688f1ba31c15ca6"
+								},
+								{
+									"key": "start_date",
+									"value": "2024-09-30 00:00:00"
+								},
+								{
+									"key": "end_date",
+									"value": "2024-10-07 00:00:00"
+								},
+								{
+									"key": "granularity_days",
+									"value": "7"
+								},
+								{
+									"key": "granularity_op",
+									"value": "sum"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "KPY by id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/kpi/:id?id=673c80f2d688f1ba31c15ca6",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"kpi",
+								":id"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "673c80f2d688f1ba31c15ca6"
+								}
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "All KPIs",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/kpi",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"kpi"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "KPI by name",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "All users",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/user/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"user",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User by name",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/user/filter?first_name=Giovanni&last_name=Bianchi",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"user",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "first_name",
+									"value": "Giovanni"
+								},
+								{
+									"key": "last_name",
+									"value": "Bianchi"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User by email",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/user/filter?email=smo@example.com",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"user",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "smo@example.com"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User login",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "User by uid",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Machine",
+			"item": [
+				{
+					"name": "Machine filter by name",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/machine/filter?machine_name=Laser Cutter",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"machine",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "machine_name",
+									"value": "Laser Cutter"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Machine by id",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "All machines",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "Machine filter by type",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/machine/filter?machine_type=placeholder",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"machine",
+								"filter"
+							],
+							"query": [
+								{
+									"key": "machine_type",
+									"value": "placeholder"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Report",
+			"item": [
+				{
+					"name": "All reports (created by user)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/report",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"report"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "By machine_id",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					"firebase_url = pm.collectionVariables.get(\"firebase_url\");",
+					"firebase_web_api_key = pm.collectionVariables.get(\"firebase_web_api_key\")",
+					"",
+					"body = JSON.stringify({",
+					"    email: pm.collectionVariables.get(\"ffm_email\"),",
+					"    password: pm.collectionVariables.get(\"ffm_pass\"),",
+					"    returnSecureToken: true",
+					"})",
+					"",
+					"postRequest = {",
+					"    url: firebase_url + \":signInWithPassword?key=\" + firebase_web_api_key,",
+					"    method: \"POST\",",
+					"    body: body,",
+					"    headers: {",
+					"        \"Content-type\": \"application/json; charset=UTF-8\"",
+					"    }",
+					"}",
+					"",
+					"pm.sendRequest(postRequest, (error, response) => {",
+					"    if (error) {",
+					"        console.log(error)",
+					"    } else {",
+					"        resp = response.json()",
+					"        token = resp[\"idToken\"]",
+					"        pm.collectionVariables.set(\"Token\", token)",
+					"    }",
+					"});",
+					"",
+					"console.log(\"FFFF\")"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "Token",
+			"value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjkyODg2OGRjNDRlYTZhOThjODhiMzkzZDM2NDQ1MTM2NWViYjMwZDgiLCJ0eXAiOiJKV1QifQ.eyJyb2xlIjoiRkZNIiwiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL3NtYXJ0YXBwLTlmMjg3IiwiYXVkIjoic21hcnRhcHAtOWYyODciLCJhdXRoX3RpbWUiOjE3MzI0NDUwNzEsInVzZXJfaWQiOiJ4TTJrZWE4YWthT0t2WXRhMjZOTUZCeThZbkozIiwic3ViIjoieE0ya2VhOGFrYU9Ldll0YTI2Tk1GQnk4WW5KMyIsImlhdCI6MTczMjQ0NTA3MSwiZXhwIjoxNzMyNDQ4NjcxLCJlbWFpbCI6ImZmbUBleGFtcGxlLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJmZm1AZXhhbXBsZS5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.PzHZd-1dIvqPVcydKEoODm-ZVK6g5So6krotS03HHr1VipwVBTm8QT_uGx5U9ejyMUy_WuK2OBC6yKj3pceexUQsDqN2iV2M_UntYSyqjwbRpUtY5gZk6Iji46Qu2J_xmBxTOixuvg72B4pJaH_aD5WxpF4f_0zJP1_I1TIsjGaRr7ZI8LuIuy0pfytNHfSy7WBgP8n068ncXTA4G_68SJczY1a27GQ0UeQLRP3hKwwnJMOPEAwp3AJvuNDKvQ9ZfNwI39X-AAu-GCIVIgdJ8aFddKuOYeTZhF9CDyndcUaoWdef8e4UR9G6VlbMPFJ7di_ywLp_l8Osgh2R_Mg26g",
+			"type": "string"
+		},
+		{
+			"key": "firebase_url",
+			"value": "https://identitytoolkit.googleapis.com/v1/accounts",
+			"type": "string"
+		},
+		{
+			"key": "firebase_web_api_key",
+			"value": "AIzaSyAtafuH0UtFJpRfa0S3lrR7P0rYgkKDSeQ",
+			"type": "string"
+		},
+		{
+			"key": "ffm_email",
+			"value": "ffm@example.com",
+			"type": "string"
+		},
+		{
+			"key": "ffm_pass",
+			"value": "passwordffm",
+			"type": "string"
+		}
+	]
+}

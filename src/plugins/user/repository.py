@@ -1,51 +1,74 @@
-from os import name
-from typing import List, Dict, Optional
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
+from pymongo.collection import Collection
 from datetime import datetime, timezone
-from src.models import User
 
-# mock a user database for now
+from src.plugins.user.schema import User
+from src.utils import create_user_collection, get_collection
+from src.custom_exceptions import  UserNotFoundException
+
+#To create these users:
+# user_collection = await create_user_collection(request)
+
+# # Insert users
+#result = await user_collection.insert_many([user.model_dump(by_alias=True) for user in users.values()])
+# print(f"Inserted {len(result.inserted_ids)} users")
 users = {
     "k8SM6PwrJ4g663v5uZo8gfC7iND2": User(
         uid="k8SM6PwrJ4g663v5uZo8gfC7iND2",
         site= 0,
-        name="Giovanni Bianchi",
+        first_name="Giovanni",
+        last_name="Bianchi",
         phone_number="1234567890",
         email="smo@example.com",
     ),
     "xM2kea8akaOKvYta26NMFBy8YnJ3": User(
         uid="xM2kea8akaOKvYta26NMFBy8YnJ3",
-        name="Mario Rossi",
+        first_name="Mario",
+        last_name="Rossi",
         site= 1,
         phone_number="0987654321",
         email="ffm@example.com",
     )
 }
 
-async def get_user(uid: str):
-    if uid not in users:
-        raise HTTPException(status_code=404, detail="User not found")
-    return users[uid]
+async def get_user_by_uid(uid: str, request: Request | None = None, user_collection: Collection[User]| None = None):
 
-async def get_user_by_email(email: str):
-    us = []
-    for user in users.values():
-        if user.email == email:
-            us.append(user)
-    if len(us) > 0:
-        return us
-    else:
-        raise HTTPException(status_code=404, detail="User not found")
+    # get collection
+    user_collection = get_collection(request=request, name="users")
 
-async def get_user_by_name(first_name: str, last_name: str):
-    us = []
-    for user in users.values():
-        if user.first_name == first_name and user.last_name == last_name:
-            us.append(user)
-    if len(us) > 0:
-        return us
+    # get user
+    user = await user_collection.find_one({"uid": uid})
+
+    if user is not None:
+        return User(**user)
     else:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise UserNotFoundException("User not found")
+
+
+async def get_user_by_email(email: str, request: Request | None = None, user_collection: Collection[User]| None = None):
+    user_collection = get_collection(request=request, name="users")
+
+    print(f"email: {email}")
+    cursor = user_collection.find({"email": email})
+    users = [User(**user) async for user in cursor]
+
+    if users is None or len(users) == 0:
+        raise UserNotFoundException(f"No user found by email {email}")
+    
+    return users
+
+async def get_user_by_name(first_name: str, last_name: str, request: Request | None = None, user_collection: Collection[User]| None = None):
+    
+    user_collection = get_collection(request=request, name="users")
+
+    # get users
+    cursor = user_collection.find({"first_name": first_name.strip().title(), "last_name": last_name.strip().title()})
+    users = [User(**user) async for user in cursor]
+    
+    if users is None or len(users) == 0:
+        raise UserNotFoundException(f"No users found by name {first_name} {last_name}")
+    return users 
+    
 
 async def update_user_db(uid: str, first_name: str = None, last_name: str = None, phone_number: str = None):
     if uid not in users:
@@ -60,77 +83,13 @@ async def update_user_db(uid: str, first_name: str = None, last_name: str = None
     user.updated_at = datetime.now(timezone.utc)
     return user
 
-async def get_all_users():
-    return list(users.values())
+async def get_all_users(request: Request | None = None, user_collection: Collection[User]| None = None):
+    # get collection
+    user_collection = get_collection(request=request, name="users")
 
-#class UserRepository(BaseRepository):
-#    async def create_user(self, user: User) -> User:
-#        if user.uid in self.users:
-#            raise HTTPException(status_code=400, detail="User already exists")
-#        user.created_at = datetime.now(timezone.utc)
-#        self.users[user.uid] = user
-#        return user
-#
-#    async def get_user(self, user_id: str) -> User:
-#        if user_id not in self.users:
-#            raise HTTPException(status_code=404, detail="User not found")
-#        return self.users[user_id]
-#
-#    async def get_user_by_email(self, email: str) -> User:
-#        for user in self.users.values():
-#            if user.email == email:
-#                return user
-#        raise HTTPException(status_code=404, detail="User not found")
-#
-#    async def list_users(self, page: int = 1, per_page: int = 20,
-#                        filters: Optional[Dict] = None) -> Dict:
-#        users = list(self.users.values())
-#        if filters:
-#            for key, value in filters.items():
-#                users = [u for u in users if getattr(u, key, None) == value]
-#        return await self.paginate(users, page, per_page)
-#
-#    async def update_user(self, user_id: str, user_data: Dict) -> User:
-#        if user_id not in self.users:
-#            raise HTTPException(status_code=404, detail="User not found")
-#        user = self.users[user_id]
-#        for key, value in user_data.items():
-#            setattr(user, key, value)
-#        user.updated_at = datetime.utcnow()
-#        return user
-#
-#    async def delete_user(self, user_id: str) -> None:
-#        if user_id not in self.users:
-#            raise HTTPException(status_code=404, detail="User not found")
-#        del self.users[user_id]
-#
-#    async def update_user_roles(self, user_id: str, roles: List[str]) -> User:
-#        user = await self.get_user(user_id)
-#        user.roles = roles
-#        user.updated_at = datetime.now(timezone.utc)
-#        return user
-#
-#    async def verify_user_email(self, user_id: str) -> User:
-#        user = await self.get_user(user_id)
-#        user.is_verified = True
-#        user.updated_at = datetime.now(timezone.utc)
-#        return user
-#
-#    async def disable_user(self, user_id: str) -> User:
-#        user = await self.get_user(user_id)
-#        user.is_active = False
-#        user.updated_at = datetime.now(timezone.utc)
-#        return user
-#
-#    async def enable_user(self, user_id: str) -> User:
-#        user = await self.get_user(user_id)
-#        user.is_active = True
-#        user.updated_at = datetime.now(timezone.utc)
-#        return user
-#
-#
-#    async def list_user_roles(self) -> List[UserRole]:
-#        user_roles = []
-#        for user in self.users.values():
-#            user_roles.append(UserRole(user_id=user.uid, roles=user.roles))
-#        return user_roles
+    # get all users
+    users = user_collection.find()
+    if users is None:
+        raise UserNotFoundException("No users found")
+    return [User(**user) async for user in users]
+    
