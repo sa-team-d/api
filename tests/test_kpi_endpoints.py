@@ -110,7 +110,7 @@ def test_compute_kpi_atomic(auth_headers):
     # Create test KPI with sample data
 
     params = {
-        "machine_id": "ast-yhccl1zjue2t",
+        "machine_id": "6740f1cfa8e3f95f42703128",
         "kpi_id": "673a6ad2d9e0b151b88cbed0",
         "start_date": "2024-09-30 00:00:00",
         "end_date": "2024-10-07 00:00:00",
@@ -136,7 +136,7 @@ def test_compute_kpi_atomic(auth_headers):
 def test_compute_kpi_composite(auth_headers):
 
     params = {
-        "machine_id": "ast-yhccl1zjue2t",
+        "machine_id": "6740f1cfa8e3f95f42703128",
         "kpi_id": "673c80f2d688f1ba31c15ca6",
         "start_date": "2024-09-30 00:00:00",
         "end_date": "2024-10-07 00:00:00",

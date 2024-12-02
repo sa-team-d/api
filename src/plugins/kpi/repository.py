@@ -8,12 +8,10 @@ from src.custom_exceptions import KPINotFoundException
 
 from pymongo.collection import Collection
 
-
+from fastapi import Request
 from bson import ObjectId
 
-from fastapi import Request
-
-async def computeKPI(
+async def computeKPIByMachine(
     machine_id, 
     kpi_id, 
     start_date, 
@@ -37,37 +35,40 @@ async def computeKPI(
     
 
     if kpi_obj.config.formula != None:
-        res = await computeCompositeKPI(
+        res = await computeCompositeKPIByMachine(
             machine_id, 
             kpi_id, 
             start_date, 
             end_date, 
             granularity_days, 
             granularity_op,
+            request,
             kpis_collection
         )
     else:
-        res = await computeAtomicKPI(
+        res = await computeAtomicKPIByMachine(
             machine_id, 
             kpi_id, 
             start_date, 
             end_date, 
             granularity_days, 
             granularity_op,
+            request,
             kpis_collection=kpis_collection
         )
     return res
 
-async def computeCompositeKPI(
+async def computeCompositeKPIByMachine(
     machine_id, 
     kpi_id, 
     start_date, 
     end_date, 
     granularity_days, 
     granularity_op,
+    request: Request,
     kpis_collection: Collection[KPI]
 ) -> List[ComputedValue]:
-    kpi_obj = await getKPIById(kpi_id, kpis_collection=kpis_collection)
+    kpi_obj = await getKPIById(kpi_id, request, kpis_collection=kpis_collection)
     
 
     if kpi_obj is None:
@@ -78,14 +79,15 @@ async def computeCompositeKPI(
     formula = kpi_obj.config.formula
     values = []
     for child in children:
-        kpi_dep = await getKPIById(child, kpis_collection=kpis_collection)
-        value = await computeKPI(
+        kpi_dep = await getKPIById(child, request, kpis_collection=kpis_collection)
+        value = await computeKPIByMachine(
             machine_id,
             kpi_dep.id, 
             start_date,
             end_date,
             granularity_days, 
             granularity_op,
+            request,
             kpis_collection=kpis_collection
         )
         values.append({ kpi_dep.name: value })
@@ -105,16 +107,18 @@ async def computeCompositeKPI(
         results.append(ComputedValue(value=result))
     return results
 
-async def computeAtomicKPI(
+async def computeAtomicKPIByMachine(
     machine_id, 
     kpi_id, 
     start_date, 
     end_date, 
     granularity_days, 
     granularity_op,
+    request: Request,
     kpis_collection: Collection[KPI]
 
 ) -> List[ComputedValue]:
+    kpis_collection = get_collection(request, kpis_collection, "kpis")
     pipeline = [
         {
             "$match": {
@@ -128,7 +132,7 @@ async def computeAtomicKPI(
         },
         {
             "$match": {
-                "data.machine_id": machine_id,
+                "data.machine_id": ObjectId(machine_id),
                 "data.datetime": {
                     "$gte": start_date,
                     "$lte": end_date
@@ -180,10 +184,8 @@ async def computeAtomicKPI(
     ]
     return [ComputedValue(**kpi) for kpi in await kpis_collection.aggregate(pipeline).to_list(None)]
 
-    
 async def getKPIByName(name: str, request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> KPIDetail:
     kpis_collection = get_collection(request, kpis_collection, "kpis")
-
     kpi = await kpis_collection.find_one({"name": name})
     return KPIDetail(**kpi) if kpi else None
 
@@ -273,11 +275,3 @@ async def deleteKPIByID(id: str, request: Request | None = None, kpis_collection
 
     result = await kpis_collection.delete_one({"_id": ObjectId(id)})
     return result.deleted_count > 0
-
-async def deleteKPIByName(name: str, request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> bool:
-    kpis_collection = get_collection(request, kpis_collection, "kpis")
-
-    result = await kpis_collection.delete_one({"name": name})
-    return result.deleted_count > 0
-
-
