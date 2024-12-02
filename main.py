@@ -11,6 +11,7 @@ from src.plugins.user import controller as user_controller
 from src.plugins.kpi import controller as kpi_controller
 from src.plugins.site import controller as site_controller
 from src.plugins.report import controller as report_controller
+from src.plugins.chat import controller as chat_controller
 from utils import description
 from src.config.firebase_config import initialize_firebase
 from src.config.db_config import AsyncDatabase, SyncDatabase
@@ -26,7 +27,7 @@ initialize_firebase()
 
 @asynccontextmanager
 async def startup_shutdown_db(app: FastAPI):
-    
+
     async_db_obj = AsyncDatabase("DATABASE_URL", "DATABASE_NAME")
     app.mongodb = async_db_obj.get_db()
     app.mongodb_obj = async_db_obj
@@ -76,20 +77,20 @@ async def redirect_to_redoc():
 
 @app.get("/health/mongodb", summary="Check MongoDB connection")
 async def check_mongodb_connection(request: Request):
-    
+
     if isinstance(request.app.mongodb_obj, AsyncDatabase):
         return await request.app.mongodb_obj.check_mongodb_connection()
     else:
         return request.app.mongodb_obj.check_mongodb_connection()
 
-    
+
 
 @app.get(
-        "/mongodb/list_all_data", 
+        "/mongodb/list_all_data",
         summary="List all data in MongoDB",
         response_class=HTMLResponse,
         # include_in_schema=False
-    
+
     )
 async def list_all_data(request: Request):
 
@@ -103,3 +104,4 @@ app.include_router(user_controller.router)
 app.include_router(kpi_controller.router)
 app.include_router(site_controller.router)
 app.include_router(report_controller.router)
+app.include_router(chat_controller.router)

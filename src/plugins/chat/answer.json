@@ -1,0 +1,1 @@
+"{\n  \"KPIs\": [\n    {\n      \"name\": \"total_consumption\",\n      \"type\": \"Efficiency KPI\",\n      \"description\": \"Total consumption of resources including both working and idle time\",\n      \"unit_of_measure\": \"kWh\",\n      \"formula\": \"consumption_working + consumption_idle\"\n    }\n  ]\n}"

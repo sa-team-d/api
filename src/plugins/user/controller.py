@@ -57,7 +57,7 @@ async def list_users(request: Request, user = Depends(verify_firebase_token)):
 @router.get("/", status_code=200, response_model=UserResponse, summary="Get current user")
 async def get_current_user(request: Request, user = Depends(verify_firebase_token)):
     try:
-        u = await repo.get_user_by_uid(user.get("uid"), request=request)
+        u = await repo.get_user_by_uid(user.uid, request=request)
         return UserResponse(success=True, data=u, message="User retrieved successfully")
     except Exception as e:
         return UserResponse(success=False, data=None, message=str(e))
@@ -73,7 +73,7 @@ async def filter_users(request: Request, first_name: str = None, last_name: str 
         return UserResponse(success=True, data=users, message="Users filtered successfully")
     except Exception as e:
         return UserResponse(success=False, data=None, message=str(e))\
-        
+
 @router.get("/:uid", status_code=200, response_model=UserResponse, summary="Get user by ID")
 async def get_user_by_id(request: Request, uid: str, user = Depends(verify_firebase_token)):
     try:

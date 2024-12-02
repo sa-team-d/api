@@ -1,3 +1,4 @@
+import re
 from fastapi import Request
 
 from src.plugins.kpi.schema import KPIOverview
@@ -17,7 +18,7 @@ def checkValidOps(op):
     if op == 'max':
         return True
     raise Exception()
-   
+
 def applyAggregationOpToMachinesKpi(op, kpi_for_machines):
     if op == 'sum':
         return [
@@ -51,7 +52,7 @@ def applyAggregationOpToMachinesKpi(op, kpi_for_machines):
 
 async def computeKPIBySite(
     request: Request,
-    site_id, 
+    site_id,
     kpi_id,
     start_date,
     end_date,
@@ -80,7 +81,7 @@ async def computeKPIBySite(
 
 async def computeKPIByMachine(
     request: Request,
-    machine_id, 
+    machine_id,
     kpi_id,
     start_date,
     end_date,
@@ -124,7 +125,7 @@ async def createKPI(
         print(f"The following KPIs are missing from the database: {missing_kpis}")
         raise ValueError("Missing KPIs")
     kpi = await repository.createKPI(name, type, description, unite_of_measure, children, formula, request=request)
-    user = await userRepository.get_user_by_uid(uid)
+    user = await userRepository.get_user_by_uid(uid, request=request)
     await siteRepository.associateKPItoSite(user.site, kpi.id, request=request)
     return kpi
 
