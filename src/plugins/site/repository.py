@@ -1,4 +1,4 @@
-from .schema import Site
+from .schema import Site, SiteOverviewWithKPIs
 from bson import ObjectId
 from fastapi import Request
 from pymongo.collection import Collection
@@ -29,7 +29,41 @@ async def getSiteById(
         "site_id": site_id
     })
     return Site(**site)
-    
+   
+async def getSiteByIdPopulatedKPI(
+    site_id: int,
+    request: Request | None = None,
+    sites_collection: Collection[Site] | None = None
+):
+    sites_collection = get_collection(request, sites_collection, "sites")
+    cursor = sites_collection.aggregate([
+        {
+            "$match":
+            {
+                "site_id": site_id
+            }
+        },
+        {
+            "$lookup":
+            {
+                "from": "kpis",
+                "localField": "kpis_ids",
+                "foreignField": "_id",
+                "as": "kpis",
+                "pipeline": [
+                {
+                "$project": {
+                    "name": 1
+                }
+                }
+            ]
+            }
+        }
+    ])
+    sites = await cursor.to_list(length=1)
+    if (len(sites) == 0): raise Exception()
+    return SiteOverviewWithKPIs(**sites[0])
+
 async def associateKPItoSite(
     site_id,
     kpi_id,
