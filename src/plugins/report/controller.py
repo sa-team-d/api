@@ -42,8 +42,24 @@ Format the output to be easily converted into a clean, well-structured PDF.
 """
 
 # create report
-@router.post("/", status_code=201, summary="Create a new report, save it to the database and return it")
-async def create_report(request: Request, name: str, site: str, kpi_names: str , frequency: str, start_date:str, end_date:str, user: User = Depends(verify_firebase_token)):
+@router.post("/", status_code=201, summary="Create a new report, save it to the database and return the PDF URL to download it")
+async def create_report(request: Request, name: str, site: str, kpi_names: str, start_date:str = "2024-11-02 00:00:00", end_date:str = "2024-11-10 00:00:00", user: User = Depends(verify_firebase_token), operation: str = "sum"):
+
+    """
+    Create a new report, save it to the database and return the PDF URL to download it
+
+    Args:
+    - name: the name of the report
+    - site: the site for which the report is created
+    - kpi_names: the names of the KPIs to include in the report
+    - start_date: the start date for the report
+    - end_date: the end date for the report
+    - user: the user creating the report
+    - operation: the operation to perform on the KPIs (sum, avg, min, max)
+
+    Returns:
+    - PDF URL to download the report
+    """
 
     start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
     end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
@@ -54,7 +70,7 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str ,
     #    raise HTTPException(status_code=400, detail="Report name already exists")
 
     # 1. Get corrispondent kpi data from the kpi service
-    # kpi_data = await kpi_service.get_kpi_data(request, kpi_names, start_date, end_date, frequency)
+    kb = await kpi_service.computeKPIForReport(request, site, start_date_obj, end_date_obj, None, operation)
 
     # 2. Compute the report with the kpi data as input
     try:
@@ -63,7 +79,7 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str ,
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": prompt},
-                {"role": "system", "content": f"Consider that you have the following Knowledge Base: {kpi_names}"},
+                {"role": "system", "content": f"Consider that you have the following Knowledge Base: {kb}"},
             ]
         )
         report_content = completion.choices[0].message.content
