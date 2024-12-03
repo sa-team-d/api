@@ -58,3 +58,19 @@ class KPIResponse(BaseModel):
     success: bool
     data: Optional[KPIDetail | List[KPIOverview | ComputedValue]] = None
     message: Optional[str] = None
+    
+class KPIReport(BaseModel):
+    name: str
+    value: float
+
+class RowReport(BaseModel):
+    start_date: datetime
+    end_date: datetime
+    op: str
+    kpis: List[KPIReport]
+
+class RowReportResponse(BaseModel):
+    success: bool
+    data: Optional[RowReport] = None
+    message: Optional[str] = None
+

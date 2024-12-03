@@ -3,9 +3,10 @@ from fastapi import Request
 
 from src.plugins.kpi.schema import KPIOverview
 from . import repository
-from .schema import ComputedValue
+from .schema import ComputedValue, RowReport, KPIReport
 from src.plugins.site import repository as siteRepository
 from src.plugins.user import repository as userRepository
+from src.plugins.machine import repository as machineRepository
 from sympy import sympify
 
 def checkValidOps(op):
@@ -50,10 +51,35 @@ def applyAggregationOpToMachinesKpi(op, kpi_for_machines):
         ]
     raise Exception()
 
+async def computeKPIForReport(
+    request: Request,
+    site_id, 
+    start_date,
+    end_date,
+    granularity_days,
+    granularity_op,
+):
+    site = await siteRepository.getSiteByIdPopulatedKPI(site_id, request=request)
+    result = RowReport(
+        start_date=start_date,
+        end_date=end_date,
+        op=granularity_op,
+        kpis=[]
+    )
+    for kpi in site.kpis:
+        kpi_result = await computeKPIBySite(request, site_id, kpi.id, start_date, end_date, granularity_days, granularity_op)
+        if len(kpi_result) != 1: raise Exception("error")
+        result.kpis.append(KPIReport(
+            name=kpi.name,
+            value=kpi_result[0].value,
+        ))
+    return result
+
 async def computeKPIBySite(
     request: Request,
     site_id,
     kpi_id,
+    category,
     start_date,
     end_date,
     granularity_days,
@@ -61,9 +87,15 @@ async def computeKPIBySite(
 ):
     if not checkValidOps(granularity_op):
         raise Exception('Not valid op')
-    site = await siteRepository.getSiteByKpi(site_id, kpi_id, request)
+    machines_ids = []
+    if category:
+        machines = await machineRepository.list_by_category(category, site_id, request)
+        machines_ids = [machine.id for machine in machines]
+    else:
+        site = await siteRepository.getSiteByKpi(site_id, kpi_id, request)
+        machines_ids = site.machines_ids
     kpi_for_machines = []
-    for machine_id in site.machines_ids:
+    for machine_id in machines_ids:
         kpi_for_machines.append(
             await computeKPIByMachine(
                 request,

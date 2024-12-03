@@ -264,10 +264,10 @@ async def createKPI(
             formula=formula
         )
     )
-    result = await kpis_collection.insert_one(kpi.model_dump(by_alias=True))
+    kpi_obj = kpi.model_dump(by_alias=True)
+    kpi_obj["config"]["children"] = [ObjectId(kpi_id) for kpi_id in kpi_obj["config"]["children"]]
+    result = await kpis_collection.insert_one(kpi_obj)
     created_kpi = await kpis_collection.find_one({"_id": result.inserted_id})
-
-
     return KPIDetail(**created_kpi)
 
 async def deleteKPIByID(id: str, request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> bool:
