@@ -73,60 +73,61 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str, 
     kb = await kpi_service.computeKPIForReport(request, site, start_date_obj, end_date_obj, None, operation)
 
     # 2. Compute the report with the kpi data as input
-    try:
-        client = OpenAI()
-        completion = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": prompt},
-                {"role": "system", "content": f"Consider that you have the following Knowledge Base: {kb}"},
-            ]
-        )
-        report_content = completion.choices[0].message.content
-    except Exception as e:
-        return ReportResponse(success=False, data=None, message="Error generating report")
+    #try:
+    #    client = OpenAI()
+    #    completion = client.chat.completions.create(
+    #        model="gpt-3.5-turbo",
+    #        messages=[
+    #            {"role": "system", "content": prompt},
+    #            {"role": "system", "content": f"Consider that you have the following Knowledge Base: {kb}"},
+    #        ]
+    #    )
+    #    report_content = completion.choices[0].message.content
+    #except Exception as e:
+    #    return ReportResponse(success=False, data=None, message="Error generating report")
 
     # 3. Convert report content to PDF
-    try:
-        # Convert Markdown to HTML
-        html_content = markdown.markdown(report_content)
-
-        # Configure pdfkit options if needed
-        options = {
-            'encoding': "UTF-8",
-            'enable-local-file-access': None
-        }
-
-        # Convert HTML to PDF
-        pdf_bytes = pdfkit.from_string(html_content, False, options=options)
-
-        # Create BytesIO object from PDF bytes
-        pdf_output = io.BytesIO(pdf_bytes)
-    except Exception as e:
-        print(f"Error creating PDF: {e}")
-        return ReportResponse(success=False, data=None, message="Error creating PDF")
+    #try:
+    #    # Convert Markdown to HTML
+    #    html_content = markdown.markdown(report_content)
+#
+    #    # Configure pdfkit options if needed
+    #    options = {
+    #        'encoding': "UTF-8",
+    #        'enable-local-file-access': None
+    #    }
+#
+    #    # Convert HTML to PDF
+    #    pdf_bytes = pdfkit.from_string(html_content, False, options=options)
+#
+    #    # Create BytesIO object from PDF bytes
+    #    pdf_output = io.BytesIO(pdf_bytes)
+    #except Exception as e:
+    #    print(f"Error creating PDF: {e}")
+    #    return ReportResponse(success=False, data=None, message="Error creating PDF")
 
     # 4. Save locally PDF to test (Optional: Remove in production)
-    if debug_mode:
-        try:
-            with open(f'reports/{name}.pdf', "wb") as f:
-                f.write(pdf_output.read())
-            pdf_output.seek(0)  # Reset buffer after reading
-        except Exception as e:
-            return ReportResponse(success=False, data=None, message="Error saving PDF locally")
+    #if debug_mode:
+    #    try:
+    #        with open(f'reports/{name}.pdf', "wb") as f:
+    #            f.write(pdf_output.read())
+    #        pdf_output.seek(0)  # Reset buffer after reading
+    #    except Exception as e:
+    #        return ReportResponse(success=False, data=None, message="Error saving PDF locally")
     # 5. save pdf on firebase storage
-    try:
-        bucket = storage.bucket()
-        blob = bucket.blob(f"report/{name}.pdf")
-        blob.upload_from_file(pdf_output, content_type="application/pdf")
-        blob.make_public()
-        pdf_url = blob.public_url
-    except Exception as e:
-        return ReportResponse(success=False, data=None, message="Error saving PDF to Firebase Storage")
+    #try:
+    #    bucket = storage.bucket()
+    #    blob = bucket.blob(f"report/{name}.pdf")
+    #    blob.upload_from_file(pdf_output, content_type="application/pdf")
+    #    blob.make_public()
+    #    pdf_url = blob.public_url
+    #except Exception as e:
+    #    return ReportResponse(success=False, data=None, message="Error saving PDF to Firebase Storage")
 
     # 6. Save the report to the database
     # TODO: Save the report to the database: name, site, kpi_names, start_date, end_date, user_uid, url
-    report = await repo.create_report(request, name, site, kpi_names, start_date_obj, end_date_obj, user.uid, pdf_url)
+    pdf_url_mock = "https://storage.googleapis.com/smartapp-9f287.firebasestorage.app/report/prova-report.pdf"
+    report = await repo.create_report(request, name, site, kpi_names, start_date_obj, end_date_obj, user.uid, pdf_url_mock)
 
     return ReportResponse(success=True, data=report, message="Report created successfully")
 
