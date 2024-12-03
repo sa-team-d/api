@@ -66,8 +66,9 @@ async def computeKPIForReport(
         op=granularity_op,
         kpis=[]
     )
+    print(granularity_days, granularity_op)
     for kpi in site.kpis:
-        kpi_result = await computeKPIBySite(request, site_id, kpi.id, start_date, end_date, granularity_days, granularity_op)
+        kpi_result = await computeKPIBySite(request, site_id, kpi.id, None, start_date, end_date, granularity_days, granularity_op)
         if len(kpi_result) != 1: raise Exception("error")
         result.kpis.append(KPIReport(
             name=kpi.name,
@@ -118,7 +119,7 @@ async def computeKPIByMachine(
     start_date,
     end_date,
     granularity_days,
-    granularity_op,
+    granularity_op
 ):
     if not checkValidOps(granularity_op):
         raise Exception('Not valid op')
