@@ -7,3 +7,4 @@ serviceAccountKey.json
 src/.DS_Store
 src/import_data
 .vscode
+smart_app_data.csv

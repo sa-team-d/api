@@ -1,7 +1,7 @@
 from datetime import datetime
 import io
 from turtle import dot
-from typing import Optional, List
+from typing import Optional, List, Union
 from fastapi import APIRouter, HTTPException, Depends, Request
 from fpdf import FPDF
 from sympy import content
@@ -43,7 +43,7 @@ Format the output to be easily converted into a clean, well-structured PDF.
 
 # create report
 @router.post("/", status_code=201, summary="Create a new report, save it to the database and return it")
-async def create_report(request: Request, name: str, site: str, kpi_names: str , frequency: str, start_date:str, end_date:str, user: User = Depends(verify_firebase_token)):
+async def create_report(request: Request, name: str, site: str, kpi_names: Union[List[str],str] , frequency: str, start_date:str, end_date:str, user: User = Depends(verify_firebase_token)):
 
     start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
     end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
@@ -88,7 +88,7 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str ,
         pdf_output = io.BytesIO(pdf_bytes)
     except Exception as e:
         print(f"Error creating PDF: {e}")
-        raise HTTPException(status_code=500, detail="Error creating PDF") from e
+        return ReportResponse(success=False, data=None, message="Error creating PDF")
 
     # 4. Save locally PDF to test (Optional: Remove in production)
     if debug_mode:
@@ -97,7 +97,8 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str ,
                 f.write(pdf_output.read())
             pdf_output.seek(0)  # Reset buffer after reading
         except Exception as e:
-            raise HTTPException(status_code=500, detail="Error saving PDF locally") from e
+            print(f"Error saving PDF locally: {e}")
+            return ReportResponse(success=False, data=None, message="Error saving PDF locally")
 
     # 5. save pdf on firebase storage
     try:
@@ -108,7 +109,7 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str ,
         pdf_url = blob.public_url
     except Exception as e:
         print(f"Error uploading PDF to Firebase Storage: {e}")
-        raise HTTPException(status_code=500, detail="Error uploading PDF to Firebase Storage") from e
+        return ReportResponse(success=False, data=None, message="Error uploading PDF to Firebase Storage")
 
     # 6. Save the report to the database
     # TODO: Save the report to the database: name, site, kpi_names, frequency, start_date, end_date, user_uid, pdf_url

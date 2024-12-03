@@ -3,10 +3,13 @@ import logging
 
 from re import DEBUG
 import firebase_admin
-from firebase_admin import credentials
+from firebase_admin import credentials, storage
 from dotenv import load_dotenv
+import pandas as pd
 
 import sys
+
+from src.plugins.anomalies.service import CSV_FILE_PATH
 sys.path.append('.')
 
 load_dotenv()
@@ -23,6 +26,9 @@ FIREBASE_AUTH_URI = os.getenv("FIREBASE_AUTH_URI")
 FIREBASE_TOKEN_URI = os.getenv("FIREBASE_TOKEN_URI")
 FIREBASE_AUTH_PROVIDER_X509_CERT_URL = os.getenv("FIREBASE_AUTH_PROVIDER_X509_CERT_URL")
 FIREBASE_CLIENT_X509_CERT_URL = os.getenv("FIREBASE_CLIENT_X509_CERT_URL")
+
+FIREBASE_BUCKET = os.getenv("FIREBASE_BUCKET")
+CSV_FILE_PATH = os.getenv("CSV_FILE_PATH")
 
 def initialize_firebase():
     cred = credentials.Certificate({
@@ -49,3 +55,12 @@ def initialize_firebase():
                 user = firebase_admin.auth.get_user(user.uid)
                 if user.custom_claims:
                     print(f"User custom claims: {user.custom_claims['role']}")
+
+        if os.getenv("DEBUG"): print("Downloading csv file from firebase for anomalies detection...")
+        try:
+            bucket = storage.bucket()
+            blob = bucket.blob(CSV_FILE_PATH)
+            blob.download_to_filename(CSV_FILE_PATH)
+            print("File downloaded successfully")
+        except Exception as e:
+            print(f"Error downloading file from firebase: {e}")
