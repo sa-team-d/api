@@ -54,7 +54,6 @@ async def computeKPIByMachine(
         logger.error(f"Error computing kpi: {e}")
         return KPIResponse(success=False, data=None, message=f"Error computing kpi: {e}")
 
-
 @router.get("/site/{site_id}/compute",status_code=200, response_model=KPIResponse, summary="Compute the value of the kpi associated to site")
 async def computeKPIBySite(
     request: Request,
@@ -64,12 +63,13 @@ async def computeKPIBySite(
     end_date: str,
     granularity_op: str,
     granularity_days: Optional[int] = None,
+    category: Optional[str] = None,
     user=Depends(verify_firebase_token)
 ):
     try:
         start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
         end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
-        res = await service.computeKPIBySite(request, site_id, kpi_id, start_date_obj, end_date_obj, granularity_days, granularity_op)
+        res = await service.computeKPIBySite(request, site_id, kpi_id, category, start_date_obj, end_date_obj, granularity_days, granularity_op)
         return KPIResponse(success=True, data=res, message="KPI computed successfully")
     except Exception as e:
         logger.error(f"Error computing kpi: {e}")

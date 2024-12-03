@@ -23,6 +23,44 @@ async def get_all(request: Request | None = None, machines_collection: Collectio
         raise MachineNotFoundException("No machines found")
     return machines
 
+# list all machines
+async def list_by_category(category: str, site_id: Optional[int], request: Request | None = None, machines_collection: Collection[MachineDetail] = None):
+    sites_collection = get_collection(request, None, "sites")
+    cursor = sites_collection.aggregate([
+        {
+            "$match":
+            {
+                "site_id": site_id
+            }
+        },
+        {
+            "$lookup":
+            {
+                "from": "machines",
+                "localField": "machines_ids",
+                "foreignField": "_id",
+                "as": "machines"
+            }
+        },
+        {
+            "$unwind":
+            {
+                "path": "$machines"
+            }
+        },
+        {
+            "$match":
+            {
+                "machines.category": category
+            }
+        }
+        ])
+    machines = [MachineOverview(**site['machines']) for site in await cursor.to_list(None)]
+
+    if len(machines) == 0:
+        raise MachineNotFoundException("No machines found")
+    return machines
+
 # get machine by ID
 async def get_by_id(machine_id: str, request: Request | None = None, machines_collection: Collection[MachineDetail] = None):
     machines_collection = get_collection(request, machines_collection, "machines")

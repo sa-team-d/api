@@ -6,6 +6,7 @@ from . import repository
 from .schema import ComputedValue, RowReport, KPIReport
 from src.plugins.site import repository as siteRepository
 from src.plugins.user import repository as userRepository
+from src.plugins.machine import repository as machineRepository
 from sympy import sympify
 
 def checkValidOps(op):
@@ -78,6 +79,7 @@ async def computeKPIBySite(
     request: Request,
     site_id,
     kpi_id,
+    category,
     start_date,
     end_date,
     granularity_days,
@@ -85,9 +87,15 @@ async def computeKPIBySite(
 ):
     if not checkValidOps(granularity_op):
         raise Exception('Not valid op')
-    site = await siteRepository.getSiteByKpi(site_id, kpi_id, request)
+    machines_ids = []
+    if category:
+        machines = await machineRepository.list_by_category(category, site_id, request)
+        machines_ids = [machine.id for machine in machines]
+    else:
+        site = await siteRepository.getSiteByKpi(site_id, kpi_id, request)
+        machines_ids = site.machines_ids
     kpi_for_machines = []
-    for machine_id in site.machines_ids:
+    for machine_id in machines_ids:
         kpi_for_machines.append(
             await computeKPIByMachine(
                 request,
