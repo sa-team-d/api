@@ -70,7 +70,7 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str, 
     #    raise HTTPException(status_code=400, detail="Report name already exists")
 
     # 1. Get corrispondent kpi data from the kpi service
-    kb = await kpi_service.computeKPIForReport(request, site, start_date_obj, end_date_obj, None, operation)
+    #kb = await kpi_service.computeKPIForReport(request, site, start_date_obj, end_date_obj, None, operation)
 
     # 2. Compute the report with the kpi data as input
     #try:
