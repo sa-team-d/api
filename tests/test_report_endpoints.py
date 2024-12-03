@@ -18,6 +18,19 @@ def auth_headers_ffm():
 def auth_headers_smo():
     return {"Authorization": f"Bearer {smoAuth.token}"}
 
+def test_get_report_by_name(auth_headers_ffm):
+    report_name = "Test Report"
+    response = requests.get(
+        f"{BASE_URL}{API_VERSION}report/{report_name}",
+        headers=auth_headers_ffm
+    )
+    json_response = response.json()
+    
+    assert response.status_code == 200
+    assert json_response['name'] == report_name
+    assert json_response['user_uid'] == ffmAuth.uid
+    assert json_response['user_uid'] != smoAuth.uid
+
 def test_get_all_reports_ffm(auth_headers_ffm):
     response = requests.get(
         f"{BASE_URL}{API_VERSION}report/",
@@ -70,12 +83,29 @@ def test_reports_ffm_smo_disjointness(auth_headers_ffm, auth_headers_smo):
     for report in reports_smo:
         assert report not in reports_ffm
 
-
-def test_get_reports_by_machine_id(auth_headers_ffm):
-    machine_id = "ast-anxkweo01vv2"  # Example machine ID
+def test_get_reports_by_site_id_smo(auth_headers_smo):
+    site_id = "6749e252b76e0afac9e0254e"  # Example machine ID
     response = requests.get(
         f"{BASE_URL}{API_VERSION}report/filter",
-        params={"machine_id": machine_id},
+        params={"site_id": site_id},
+        headers=auth_headers_smo
+    )
+    json_response = response.json()
+    
+    assert response.status_code == 200
+    assert json_response['success'] == True
+    assert isinstance(json_response['data'], list)
+    if len(json_response['data']) > 0:
+        assert site_id in json_response['data'][0]['asset_id']
+        assert json_response['data'][0]['user_uid'] == smoAuth.uid
+        assert json_response['data'][0]['user_uid'] != ffmAuth.uid
+        
+
+def test_get_reports_by_site_id_ffm(auth_headers_ffm):
+    site_id = "6749e252b76e0afac9e0254e"  # Example machine ID
+    response = requests.get(
+        f"{BASE_URL}{API_VERSION}report/filter",
+        params={"site_id": site_id},
         headers=auth_headers_ffm
     )
     json_response = response.json()
@@ -84,16 +114,16 @@ def test_get_reports_by_machine_id(auth_headers_ffm):
     assert json_response['success'] == True
     assert isinstance(json_response['data'], list)
     if len(json_response['data']) > 0:
-        assert machine_id in json_response['data'][0]['asset_id']
+        assert site_id in json_response['data'][0]['asset_id']
         assert json_response['data'][0]['user_uid'] == ffmAuth.uid
         assert json_response['data'][0]['user_uid'] != smoAuth.uid
 
 
-def test_get_reports_by_machine_id_not_found(auth_headers_smo):
-    machine_id = "nonexistent-id"
+def test_get_reports_by_site_id_not_found(auth_headers_smo):
+    site_id = "nonexistent-id"
     response = requests.get(
         f"{BASE_URL}{API_VERSION}report/filter",
-        params={"machine_id": machine_id},
+        params={"site_id":site_id},
         headers=auth_headers_smo
     )
     json_response = response.json()

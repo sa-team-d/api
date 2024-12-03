@@ -124,9 +124,7 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str, 
     except Exception as e:
         return ReportResponse(success=False, data=None, message="Error saving PDF to Firebase Storage")
 
-    # 6. Save the report to the database
-    # TODO: Save the report to the database: name, site, kpi_names, start_date, end_date, user_uid, url
-    #report = await repo.create_report(request, name, site, kpi_names, start_date_obj, end_date_obj, user.uid, pdf_url)
+    report_insert_id = await repo.create_report(request, name, site, kpi_names, start_date_obj, end_date_obj, user.uid, pdf_url)
 
     return ReportResponse(success=True, data=pdf_url, message="Report created successfully")
 
@@ -140,11 +138,11 @@ async def get_all_reports(request: Request, user: User = Depends(verify_firebase
         return ReportResponse(success=False, data=None, message=str(e))
 
 # filter reports by site
-@router.get("/filter", status_code=200, response_model=ReportResponse, summary="Get all reports for a specific machine created by the logged user")
-async def get_reports_by_machine_id(request: Request, machine_id: str, user: User = Depends(verify_firebase_token)):
+@router.get("/filter", status_code=200, response_model=ReportResponse, summary="Get all reports for a specific site created by the logged user")
+async def get_reports_by_site_id(request: Request, site_id: str, user: User = Depends(verify_firebase_token)):
     try:
-        if machine_id:
-            reports = await repo.reports_by_machine_id(request, machine_id, user.uid)
+        if site_id:
+            reports = await repo.reports_by_site_id(request, site_id, user.uid)
         else:
             return ReportResponse(success=False, data=None, message="No filter provided")
         return ReportResponse(success=True, data=reports, message="Reports retrieved successfully")

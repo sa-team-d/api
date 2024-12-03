@@ -15,6 +15,7 @@ from src.plugins.chat import controller as chat_controller
 from utils import description
 from src.config.firebase_config import initialize_firebase
 from src.config.db_config import AsyncDatabase, SyncDatabase
+from src.utils import create_report_collection
 
 import logging
 from dotenv import load_dotenv
@@ -31,6 +32,8 @@ async def startup_shutdown_db(app: FastAPI):
     async_db_obj = AsyncDatabase("DATABASE_URL", "DATABASE_NAME")
     app.mongodb = async_db_obj.get_db()
     app.mongodb_obj = async_db_obj
+
+    await create_report_collection(mongodb=app.mongodb)
 
     yield
     async_db_obj.client.close()

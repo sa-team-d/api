@@ -18,26 +18,38 @@ DATABASE_NAME = os.getenv("DATABASE_NAME")
 logger = logging.getLogger("uvicorn-error")
 
 
-async def create_report_collection(request: Request) -> None:
-    # Connect to MongoDB
-    db: AsyncIOMotorDatabase = request.app.mongodb
+async def create_report_collection(request: Request = None, mongodb: AsyncIOMotorDatabase = None ) -> None:
+    
+    if request is None and mongodb is None:
+        raise ValueError("Must provide either request or mongodb")
+    
 
+    if request is not None:    
+        # Connect to MongoDB
+        db: AsyncIOMotorDatabase = request.app.mongodb
+    else:
+        db = mongodb
+        
     # Define validator schema
     
     validator = {
     '$jsonSchema': {
         'bsonType': 'object',
-        'required': ['kpi_name', 'content', 'date', 'user_uid', 'asset_id'],
+        'required': ['kpi_name', 'name', 'start_date', 'end_date', 'user_uid', 'sites_id', 'url'],
         'properties': {
             'kpi_name': {
                 'bsonType': 'string',
                 'description': 'must be a string and is required'
             },
-            'content': {
+            'name': {
                 'bsonType': 'string',
                 'description': 'must be a string and is required'
             },
-            'date': {
+            'start_date': {
+                'bsonType': 'date',
+                'description': 'must be a date and is required'
+            },
+            'end_date': {
                 'bsonType': 'date',
                 'description': 'must be a date and is required'
             },
@@ -45,12 +57,16 @@ async def create_report_collection(request: Request) -> None:
                 'bsonType': 'string',
                 'description': 'must be a string and is required'
             },
-            'asset_id': {
+            'sites_id': {
                 'bsonType': 'array',
                 'items': {
-                    'bsonType': 'string'
+                    'bsonType': 'objectId'
                 },
-                'description': 'must be an array of strings and is required',
+                'description': 'must be an array of ObjectId and is required',
+            },
+            'url': {
+                'bsonType': 'string',
+                'description': 'must be a string and is required',
             }
         }
     }

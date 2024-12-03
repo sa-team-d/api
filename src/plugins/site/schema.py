@@ -15,11 +15,7 @@ class KPIOverview(BaseModel):
     id: PydanticObjectId = Field(alias="_id")
     name: str
 
-class SiteOverviewWithKPIs(BaseModel):
-    id: PydanticObjectId = Field(alias="_id")
-    machines_ids: List[PydanticObjectId] = []
-    kpis_ids: List[PydanticObjectId] = []
-    site_id: int
+class SiteOverviewWithKPIs(Site):
     kpis: List[KPIOverview]
     
 class SiteResponse(BaseModel):

@@ -4,38 +4,44 @@ from typing import Optional, List
 
 from pydantic_mongo import PydanticObjectId
 
-from src.plugins.machine.schema import MachineOverview
+from src.plugins.site.schema import SiteOverviewWithKPIs
 
 class ReportAbstract(BaseModel):
     kpi_name: str = Field(..., description="Name of the KPI being reported")
-    content: str = Field(..., description="Report content/description")
-    date: datetime = Field(default_factory=datetime.now, description="Report creation date")
+    name: str = Field(..., description="Report name")
+    start_date: datetime = Field(default_factory=datetime.now, description="Start date of the report")
+    end_date: datetime = Field(default_factory=datetime.now, description="End date of the report")
     user_uid: str = Field(..., description="User identifier who created the report")
+    url:str = Field(..., description="URL to the report")
 
     class Config:
         from_attributes = True
         json_schema_extra = {
             "example": {
-                "kpi_name": "Monthly Revenue",
-                "content": "Revenue increased by 15% compared to last month",
-                "date": "2024-03-20T10:00:00",
+                "kpi_name": "some kpi",
+                "name": "Monthly something",
+                "start_date": "2024-03-01T00:00:00",
+                "end_date": "2024-03-31T23:59:59",
                 "user_uid": "user123",
+                "url": "https://example.com/reports/monthly-revenue-report.pdf"
             }
         }
 
 
 class Report(ReportAbstract):
-    asset_id: List[str] = Field(..., description="Asset identifier(s) associated with the report")
+    sites_id: List[str] = Field(..., description="Asset identifier(s) associated with the report")
 
     class Config:
         from_attributes = True
         json_schema_extra = {
             "example": {
-                "kpi_name": "Monthly Revenue",
-                "content": "Revenue increased by 15% compared to last month",
-                "date": "2024-03-20T10:00:00",
+                "kpi_name": "some kpi",
+                "name": "Monthly something",
+                "start_date": "2024-03-01T00:00:00",
+                "end_date": "2024-03-31T23:59:59",
                 "user_uid": "user123",
-                "asset_id": ["ast-anxkweo01vv2"]
+                "url": "https://example.com/reports/monthly-revenue-report.pdf",
+                "sites_id": ["ObjectId(23423)", "ObjectId(123324234)"]
             }
         }
 
@@ -44,7 +50,7 @@ class ReportDetail(Report):
     
 class ReportOverview(ReportAbstract):
     id: PydanticObjectId = Field(alias="_id")
-    machines: Optional[List[MachineOverview]] = Field(default=None, description="List of machines associated with the report")
+    sites: Optional[List[SiteOverviewWithKPIs]] = Field(default=None, description="List of machines associated with the report")
 
 class ReportResponse(BaseModel):
     success: bool = Field(..., description="Indicates if the operation was successful")
