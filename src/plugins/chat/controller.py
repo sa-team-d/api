@@ -55,7 +55,6 @@ async def getChatResponse(
     # get kb
     all_kpi: List[KPIOverview] = await kpi_service.listKPIs(request)
 
-    # TODO: get machine information
     all_machines = await machine_repository.get_all(request)
     # get only the machine names
     all_machines = [(machine.name, machine.category) for machine in all_machines]

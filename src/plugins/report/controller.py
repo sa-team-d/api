@@ -84,7 +84,7 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str, 
         )
         report_content = completion.choices[0].message.content
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Error getting chat response") from e
+        return ReportResponse(success=False, data=None, message="Error generating report")
 
     # 3. Convert report content to PDF
     try:
@@ -113,9 +113,7 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str, 
                 f.write(pdf_output.read())
             pdf_output.seek(0)  # Reset buffer after reading
         except Exception as e:
-            print(f"Error saving PDF locally: {e}")
             return ReportResponse(success=False, data=None, message="Error saving PDF locally")
-
     # 5. save pdf on firebase storage
     try:
         bucket = storage.bucket()
@@ -124,13 +122,13 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str, 
         blob.make_public()
         pdf_url = blob.public_url
     except Exception as e:
-        print(f"Error uploading PDF to Firebase Storage: {e}")
-        return ReportResponse(success=False, data=None, message="Error uploading PDF to Firebase Storage")
+        return ReportResponse(success=False, data=None, message="Error saving PDF to Firebase Storage")
 
     # 6. Save the report to the database
-    # TODO: Save the report to the database: name, site, kpi_names, frequency, start_date, end_date, user_uid, pdf_url
+    # TODO: Save the report to the database: name, site, kpi_names, start_date, end_date, user_uid, url
+    report = await repo.create_report(request, name, site, kpi_names, start_date_obj, end_date_obj, user.uid, pdf_url)
 
-    return pdf_url
+    return ReportResponse(success=True, data=report, message="Report created successfully")
 
 # get all reports from all sites
 @router.get("/", status_code=200, response_model=ReportResponse, summary="Get all reports created by the user")
