@@ -11,6 +11,7 @@ from sympy import catalan
 from src.plugins.auth.firebase import verify_firebase_token
 from openai import OpenAI
 from src.plugins.kpi import service as kpi_service
+from src.plugins.machine import repository as machine_repository
 from http.client import HTTPResponse
 
 from src.plugins.kpi.schema import KPIOverview
@@ -53,9 +54,11 @@ async def getChatResponse(
 ):
     # get kb
     all_kpi: List[KPIOverview] = await kpi_service.listKPIs(request)
-    print(str(all_kpi))
 
     # TODO: get machine information
+    all_machines = await machine_repository.get_all(request)
+    # get only the machine names
+    all_machines = [(machine.name, machine.category) for machine in all_machines]
 
     try:
         client = OpenAI()
@@ -63,7 +66,7 @@ async def getChatResponse(
             model="gpt-3.5-turbo",
             messages=[
                 {"role":"system", "content": prompt},
-                {"role": "system", "content": "Consider that your knowledge base is composed by the following KPIs:"+str(all_kpi)},
+                {"role": "system", "content": "Consider that your knowledge base is composed by the following KPIs:"+str(all_kpi)+" and the following machines:"+str(all_machines)},
                 {"role": "user", "content": query}
             ]
         )
@@ -93,5 +96,5 @@ async def getChatResponse(
             # normal response from chat
             return response
     except Exception as e:
-        logger.error(f"Error getting chat: {e}")
-        return HTTPResponse(status_code=500, content=f"Error getting chat: {str(e)}")
+        print(f"Error getting chat response: {e}")
+        return HTTPResponse(status=500, reason="Error getting chat response")

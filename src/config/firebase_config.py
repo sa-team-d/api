@@ -39,7 +39,9 @@ def initialize_firebase():
     })
     #cred = credentials.Certificate(os.getenv("FIREBASE_CREDENTIALS"))
     if not firebase_admin._apps:
-        firebase_admin.initialize_app(cred)
+        firebase_admin.initialize_app(cred, {
+            'storageBucket': f"smartapp-9f287.firebasestorage.app"
+        })
         # print the users in the Firebase project
         if os.getenv("DEBUG"):
             users = firebase_admin.auth.list_users()
