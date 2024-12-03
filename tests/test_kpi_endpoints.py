@@ -32,7 +32,6 @@ def test_list_kpis(auth_headers):
         f"{BASE_URL}{API_VERSION}kpi/",
         headers=auth_headers    
     )
-    print(response)
     assert response.status_code == 200
     assert isinstance(response.json()['data'], list)
 

@@ -84,7 +84,6 @@ async def computeKPIForReport(
     granularity_op: str,
     user=Depends(verify_firebase_token)
 ):
-    print(granularity_op)
     try:
         start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
         end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
