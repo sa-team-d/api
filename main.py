@@ -12,6 +12,7 @@ from src.plugins.kpi import controller as kpi_controller
 from src.plugins.site import controller as site_controller
 from src.plugins.report import controller as report_controller
 from src.plugins.chat import controller as chat_controller
+from src.plugins.anomalies import controller as anomalies_controller
 from utils import description
 from src.config.firebase_config import initialize_firebase
 from src.config.db_config import AsyncDatabase, SyncDatabase
@@ -105,3 +106,4 @@ app.include_router(kpi_controller.router)
 app.include_router(site_controller.router)
 app.include_router(report_controller.router)
 app.include_router(chat_controller.router)
+app.include_router(anomalies_controller.router)
