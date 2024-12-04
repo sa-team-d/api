@@ -16,12 +16,13 @@ API_VERSION = os.getenv("API_VERSION")
 def auth_headers():
     return {"Authorization": f"Bearer {ffmAuth.token}"}
 
+@pytest.fixture(scope="session", autouse=True)
 def test_server_is_up():
     try:
         response = requests.get(f"{BASE_URL}")
         assert response.status_code == 200
-    except requests.ConnectionError:
-        pytest.fail("Server is not running at http://127.0.0.1:8000")
+    except (requests.ConnectionError, AssertionError) as e:
+        pytest.exit(f"Server check failed: {str(e)}, run first the server")
 
 def test_get_all_machines(auth_headers):
     response = requests.get(

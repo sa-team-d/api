@@ -35,7 +35,7 @@ def test_compute(auth_headers):
         100,
         "sum",
     )
-    
+    logger.info(response) 
     if isinstance(response['data'], list):
         assert 1
     else:
