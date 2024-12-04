@@ -2,11 +2,22 @@ import requests
 import logging
 import os
 
+import pytest
 
 
 logger = logging.getLogger(__name__)
 BASE_URL = os.getenv("BASE_URL")
 API_VERSION = os.getenv("API_VERSION")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def test_server_is_up():
+    try:
+        response = requests.get(f"{BASE_URL}")
+        assert response.status_code == 200
+    except (requests.ConnectionError, AssertionError) as e:
+        pytest.exit(f"Server check failed: {str(e)}, run first the server")
+
 
 def test_mongodb_health_check():
     response = requests.get(

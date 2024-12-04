@@ -4,13 +4,8 @@ from pymongo.collection import Collection
 from fastapi import Request
 
 from src.plugins.report.schema import Report, ReportOverview, ReportDetail
-from src.utils import get_collection, create_report_collection
 from src.custom_exceptions import ReportNotFoundException
-
-
-
-# To create the report collection:
-# report_collection = await create_report_collection(request)
+from src.utils import get_collection
 
 
 
@@ -30,17 +25,20 @@ async def get_reports_with_site(user_uid, report_collection: Collection[Report],
             "$lookup": {
                 "from": "sites",
                 "localField": "sites_id",
-                "foreignField": "_id",
+                "foreignField": "site_id",
                 "as": "site"
             }
         },
         {
             "$project": {
                 "site": 1,
-                "content": 1,
-                "date": 1,
+                "name": 1,
+                "start_date": 1,
                 "kpi_name": 1,
-                "user_uid": 1
+                "user_uid": 1,
+                "end_date": 1,
+                "url": 1
+                
             }
         }
     ]
@@ -68,17 +66,17 @@ async def all_reports(request: Request | None = None, report_collection: Collect
 
 
 
-async def reports_by_site_id(request: Request, site_id: str, user_uid: Optional[str] = None, report_collection: Collection[Report] | None = None):
+async def reports_by_site_id(request: Request, site_id: int, report_name:str =None,  user_uid: Optional[str] = None, report_collection: Collection[Report] | None = None):
     report_collection = get_collection(request=request, name="reports")
 
-    if user_uid:
-        cursor = report_collection.find({"sites_id": {"$in": [site_id]}, "user_uid": user_uid})
-    else:
-        cursor = cursor = report_collection.find({"sites_id": {"$in": [site_id]}})
+    if user_uid and report_name:
+        cursor = report_collection.find({"sites_id": site_id, "user_uid": user_uid, "name": report_name})
+    elif user_uid:
+        cursor = cursor = report_collection.find({"sites_id": site_id, "user_uid": user_uid})
     reports = [ReportDetail(**report) async for report in cursor]
 
     if reports is None or len(reports) == 0:
-        raise ReportNotFoundException(f"No reports found for machine_id {site_id}")
+        raise ReportNotFoundException(f"No reports found for site_id {site_id}")
     return reports
 
 async def reports_by_user_uid(request: Request, user_uid: str, report_collection: Collection[Report] | None = None):

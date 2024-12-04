@@ -68,6 +68,7 @@ async def computeKPIForReport(
     )
     for kpi in site.kpis:
         kpi_result = await computeKPIBySite(request, site_id, kpi.id, None, start_date, end_date, granularity_days, granularity_op)
+        print(f"KPI: {kpi.name} - {kpi_result}")
         if len(kpi_result) != 1: raise Exception("error")
         result.kpis.append(KPIReport(
             name=kpi.name,
@@ -158,11 +159,14 @@ async def createKPI(
         raise ValueError("Missing KPIs")
     kpi = await repository.createKPI(name, type, description, unite_of_measure, children, formula, request=request)
     user = await userRepository.get_user_by_uid(uid, request=request)
+    
     await siteRepository.associateKPItoSite(user.site, kpi.id, request=request)
     return kpi
 
 async def deleteKPIByID(request: Request, id: str):
     await siteRepository.removeKPIfromSites(id, request=request)
+    await machineRepository.removeKPIfromMachines(id, request=request)
+    
     return await repository.deleteKPIByID(id, request=request)
 
 async def getKPIByName(request: Request, name: str):

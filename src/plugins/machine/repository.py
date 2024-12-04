@@ -112,3 +112,10 @@ async def get_by_name(machine_name: str, machine_type: Optional[str] = None, req
     if len(machines) == 0:
         raise MachineNotFoundException("No machines found")
     return machines
+
+
+async def removeKPIfromMachines(_id: ObjectId, request: Request | None = None, machines_collection: Collection[MachineDetail] = None):
+    machines_collection = get_collection(request, machines_collection, "machines")
+    result = await machines_collection.update_many({}, { "$pull": { "kpis_ids": _id } })
+
+    return result.modified_count 

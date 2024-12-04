@@ -60,7 +60,7 @@ async def create_report_collection(request: Request = None, mongodb: AsyncIOMoto
             'sites_id': {
                 'bsonType': 'array',
                 'items': {
-                    'bsonType': 'objectId'
+                    'bsonType': 'int'
                 },
                 'description': 'must be an array of ObjectId and is required',
             },

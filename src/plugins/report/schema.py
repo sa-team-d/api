@@ -29,7 +29,7 @@ class ReportAbstract(BaseModel):
 
 
 class Report(ReportAbstract):
-    sites_id: List[str] = Field(..., description="Asset identifier(s) associated with the report")
+    sites_id: List[int] = Field(..., description="Asset identifier(s) associated with the report")
 
     class Config:
         from_attributes = True
@@ -41,7 +41,7 @@ class Report(ReportAbstract):
                 "end_date": "2024-03-31T23:59:59",
                 "user_uid": "user123",
                 "url": "https://example.com/reports/monthly-revenue-report.pdf",
-                "sites_id": ["ObjectId(23423)", "ObjectId(123324234)"]
+                "sites_id": ["12", "1"]
             }
         }
 

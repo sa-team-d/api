@@ -22,3 +22,7 @@ class SiteResponse(BaseModel):
     success: bool
     data: Optional[Site | List[Site]] = None
     message: Optional[str] = None
+
+
+class SiteOverviewCreate(Site):
+    kpis_ids: List[KPIOverview]

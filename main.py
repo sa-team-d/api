@@ -16,6 +16,7 @@ from utils import description
 from src.config.firebase_config import initialize_firebase
 from src.config.db_config import AsyncDatabase, SyncDatabase
 from src.utils import create_report_collection
+from reports.tests_report_mongodb import mock_reports
 
 import logging
 from dotenv import load_dotenv
@@ -33,7 +34,10 @@ async def startup_shutdown_db(app: FastAPI):
     app.mongodb = async_db_obj.get_db()
     app.mongodb_obj = async_db_obj
 
-    await create_report_collection(mongodb=app.mongodb)
+    # await app.mongodb['reports'].drop()
+    # await create_report_collection(mongodb=app.mongodb)
+
+    # app.mongodb['reports'].insert_many(report.model_dump() for report in mock_reports)
 
     yield
     async_db_obj.client.close()

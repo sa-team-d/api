@@ -8,7 +8,6 @@ from sympy import content
 
 from src.plugins.auth.firebase import verify_firebase_token_and_role, verify_firebase_token
 from src.plugins.user.schema import User
-from src.utils import get_collection
 
 from .schema import Report, ReportResponse
 from . import repository as repo
@@ -139,10 +138,13 @@ async def get_all_reports(request: Request, user: User = Depends(verify_firebase
 
 # filter reports by site
 @router.get("/filter", status_code=200, response_model=ReportResponse, summary="Get all reports for a specific site created by the logged user")
-async def get_reports_by_site_id(request: Request, site_id: str, user: User = Depends(verify_firebase_token)):
+async def get_reports_by_site_id(request: Request, site_id: int = None, name:str = None, user: User = Depends(verify_firebase_token)):
     try:
-        if site_id:
-            reports = await repo.reports_by_site_id(request, site_id, user.uid)
+        print(f"Site ID: {site_id} -- Name: {name}")
+        if site_id is not None:
+            reports = await repo.reports_by_site_id(request, site_id, name, user.uid)
+        elif name:
+            reports = await repo.report_by_name(request, name)
         else:
             return ReportResponse(success=False, data=None, message="No filter provided")
         return ReportResponse(success=True, data=reports, message="Reports retrieved successfully")
