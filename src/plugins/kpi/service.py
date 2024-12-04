@@ -137,8 +137,8 @@ async def getKPIByName(request: Request, name: str):
 async def getKPIById(request: Request, id: str):
     return await  repository.getKPIById(id, request=request)
 
-async def listKPIs(request: Request) -> list[KPIOverview]:
-    return await repository.listKPIs(request=request)
+async def listKPIs(site: int, request: Request) -> list[KPIOverview]:
+    return await repository.listKPIs(site, request=request)
 
 async def createKPI(
     request: Request,
