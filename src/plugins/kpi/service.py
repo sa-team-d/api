@@ -8,6 +8,7 @@ from src.plugins.site import repository as siteRepository
 from src.plugins.user import repository as userRepository
 from src.plugins.machine import repository as machineRepository
 from sympy import sympify
+import math
 
 def checkValidOps(op):
     if op == 'sum':
@@ -68,10 +69,10 @@ async def computeKPIForReport(
     )
     for kpi in site.kpis:
         kpi_result = await computeKPIBySite(request, site_id, kpi.id, None, start_date, end_date, granularity_days, granularity_op)
-        if len(kpi_result) != 1: raise Exception("error")
+        if len(kpi_result) != 1: raise Exception("No kpi result found")
         result.kpis.append(KPIReport(
-            name=kpi.name,
-            value=kpi_result[0].value,
+            name = kpi.name,
+            value = kpi_result[0].value,
         ))
     return result
 
@@ -122,7 +123,13 @@ async def computeKPIByMachine(
 ):
     if not checkValidOps(granularity_op):
         raise Exception('Not valid op')
-    return await repository.computeKPIByMachine(machine_id, kpi_id, start_date, end_date, granularity_days, granularity_op, request=request)
+    res = await repository.computeKPIByMachine(machine_id, kpi_id, start_date, end_date, granularity_days, granularity_op, request=request)
+    for v in res:
+        if math.isnan(v.value):
+            raise Exception('Computed value is not valid for this kpi: ', kpi_id)
+    if len(res) == 0:
+        raise Exception('There are not data for this kpi: ', kpi_id)
+    return res
 
 async def getKPIByName(request: Request, name: str):
     return await repository.getKPIByName(name, request=request)
