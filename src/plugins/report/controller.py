@@ -43,7 +43,7 @@ Format the output to be easily converted into a clean, well-structured PDF.
 
 # create report
 @router.post("/", status_code=201, summary="Create a new report, save it to the database and return the PDF URL to download it")
-async def create_report(request: Request, name: str, site: str, kpi_names: str, start_date:str = "2024-09-30 00:00:00", end_date:str = "2024-10-14 00:00:00", user: User = Depends(verify_firebase_token), operation: str = "avg"):
+async def create_report(request: Request, name: str, site: int, kpi_names: str, start_date:str = "2024-09-30 00:00:00", end_date:str = "2024-10-14 00:00:00", user: User = Depends(verify_firebase_token), operation: str = "avg"):
 
     """
     Create a new report, save it to the database and return the PDF URL to download it
@@ -84,7 +84,7 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str, 
         )
         report_content = completion.choices[0].message.content
     except Exception as e:
-        return ReportResponse(success=False, data=None, message="Error generating report")
+        return ReportResponse(success=False, data=None, message=f"Error generating report: {e}")
 
     # 3. Convert report content to PDF
     try:
