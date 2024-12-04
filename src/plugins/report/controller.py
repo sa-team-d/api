@@ -60,6 +60,8 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str, 
     - PDF URL to download the report
     """
 
+    
+
     start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
     end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
 

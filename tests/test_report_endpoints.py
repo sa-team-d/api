@@ -2,6 +2,7 @@ import pytest
 import requests
 import logging
 import os
+import datetime
 
 
 from define import ffmAuth, smoAuth
@@ -139,21 +140,116 @@ def test_get_reports_by_site_id_not_found(auth_headers_smo):
     assert "No reports found" in json_response['message']
 
 
-# def test_create_report(auth_headers):
+# def test_create_report_success(auth_headers_ffm):
 #     report_data = {
-#         "name": "Test Report",
-#         "site": "Test Site",
-#         "kpi_name": "Monthly Revenue",
-#         "frequency": "monthly"
+#         "name": "Test Production Report",
+#         "site": 1,
+#         "kpi_names": "production_rate,efficiency",
+#         "start_date": "2024-01-01 00:00:00",
+#         "end_date": "2024-02-10 00:00:00",
+#         "operation": "sum"
 #     }
     
 #     response = requests.post(
 #         f"{BASE_URL}{API_VERSION}report/",
 #         params=report_data,
-#         headers=auth_headers
+#         headers=auth_headers_ffm
 #     )
 #     json_response = response.json()
     
 #     assert response.status_code == 201
-#     assert json_response['kpi_name'] == report_data['kpi_name']
-#     assert isinstance(json_response['user_uid'], str)
+#     assert json_response['success'] == True
+#     assert json_response['message'] == "Report created successfully"
+#     assert isinstance(json_response['data'], str)  # PDF URL
+#     assert json_response['data'].startswith("https://")
+
+def test_create_report_invalid_date(auth_headers_ffm):
+    report_data = {
+        "name": "Invalid Date Report",
+        "site": "Factory A",
+        "kpi_names": "production_rate",
+        "start_date": "invalid-date",
+        "end_date": "2024-11-10 00:00:00",
+        "operation": "sum"
+    }
+    
+    response = requests.post(
+        f"{BASE_URL}{API_VERSION}report/",
+        params=report_data,
+        headers=auth_headers_ffm
+    )
+    
+    assert response.status_code == 422  # FastAPI validation error
+
+def test_create_report_missing_params(auth_headers_ffm):
+    report_data = {
+        "name": "Incomplete Report"
+        # Missing required parameters
+    }
+    
+    response = requests.post(
+        f"{BASE_URL}{API_VERSION}report/",
+        params=report_data,
+        headers=auth_headers_ffm
+    )
+    
+    assert response.status_code == 422
+
+def test_create_report_invalid_operation(auth_headers_ffm):
+    report_data = {
+        "name": "Invalid Operation Report",
+        "site": "Factory A",
+        "kpi_names": "production_rate",
+        "start_date": "2024-11-02 00:00:00",
+        "end_date": "2024-11-10 00:00:00",
+        "operation": "invalid_op"
+    }
+    
+    response = requests.post(
+        f"{BASE_URL}{API_VERSION}report/",
+        params=report_data,
+        headers=auth_headers_ffm
+    )
+    json_response = response.json()
+    
+    assert response.status_code == 200  # API returns 200 even for errors
+    assert json_response['success'] == False
+
+def test_create_report_unauthorized():
+    report_data = {
+        "name": "Unauthorized Report",
+        "site": "Factory A",
+        "kpi_names": "production_rate",
+        "start_date": "2024-11-02 00:00:00",
+        "end_date": "2024-11-10 00:00:00"
+    }
+    
+    response = requests.post(
+        f"{BASE_URL}{API_VERSION}report/",
+        params=report_data,
+        headers={"Authorization": "Bearer invalid_token"}
+    )
+    
+    assert response.status_code == 401
+
+def test_create_report_future_dates(auth_headers_ffm):
+    future_start = datetime.datetime.now() + datetime.timedelta(days=30)
+    future_end = future_start + datetime.timedelta(days=7)
+    
+    report_data = {
+        "name": "Future Report",
+        "site": "Factory A",
+        "kpi_names": "production_rate",
+        "start_date": future_start.strftime("%Y-%m-%d %H:%M:%S"),
+        "end_date": future_end.strftime("%Y-%m-%d %H:%M:%S")
+    }
+    
+    response = requests.post(
+        f"{BASE_URL}{API_VERSION}report/",
+        params=report_data,
+        headers=auth_headers_ffm
+    )
+    json_response = response.json()
+    
+    assert response.status_code == 200
+    assert json_response['success'] == False
