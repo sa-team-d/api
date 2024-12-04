@@ -179,7 +179,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://127.0.0.1:8000/api/v1.0/kpi/compute?machine_id=ast-yhccl1zjue2t&kpi_id=673c80f2d688f1ba31c15ca6&start_date=2024-09-30 00:00:00&end_date=2024-10-07 00:00:00&granularity_days=7&granularity_op=sum",
+							"raw": "http://127.0.0.1:8000/api/v1.0/kpi/machine/6740f1cfa8e3f95f42703128/compute?kpi_id=673a6ad2d9e0b151b88cbed0&start_date=2024-09-30 00:00:00&end_date=2024-10-07 00:00:00&granularity_days=7&granularity_op=sum",
 							"protocol": "http",
 							"host": [
 								"127",
@@ -192,16 +192,14 @@
 								"api",
 								"v1.0",
 								"kpi",
+								"machine",
+								"6740f1cfa8e3f95f42703128",
 								"compute"
 							],
 							"query": [
 								{
-									"key": "machine_id",
-									"value": "ast-yhccl1zjue2t"
-								},
-								{
 									"key": "kpi_id",
-									"value": "673c80f2d688f1ba31c15ca6"
+									"value": "673a6ad2d9e0b151b88cbed0"
 								},
 								{
 									"key": "start_date",
@@ -296,10 +294,69 @@
 					"response": []
 				},
 				{
-					"name": "KPI by name",
+					"name": "By name",
 					"request": {
 						"method": "GET",
 						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "Compute by site",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "Compute for report",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/kpi/site/0/report?start_date=2024-01-01 00:00:00&end_date=2024-01-07 00:00:00&granularity_op=sum",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"kpi",
+								"site",
+								"0",
+								"report"
+							],
+							"query": [
+								{
+									"key": "start_date",
+									"value": "2024-01-01 00:00:00"
+								},
+								{
+									"key": "end_date",
+									"value": "2024-01-07 00:00:00"
+								},
+								{
+									"key": "granularity_op",
+									"value": "sum"
+								}
+							]
+						}
 					},
 					"response": []
 				}
@@ -596,10 +653,87 @@
 					"response": []
 				},
 				{
-					"name": "By machine_id",
+					"name": "By site_id",
 					"request": {
 						"method": "GET",
 						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "By report name",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "Create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1.0/report?name=Test Production Report&site=1&kpi_names=working_time&start_date=2024-01-01 00:00:00&end_date=2024-02-10 00:00:00&operation=sum",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1.0",
+								"report"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "Test Production Report"
+								},
+								{
+									"key": "site",
+									"value": "1"
+								},
+								{
+									"key": "kpi_names",
+									"value": "working_time"
+								},
+								{
+									"key": "start_date",
+									"value": "2024-01-01 00:00:00"
+								},
+								{
+									"key": "end_date",
+									"value": "2024-02-10 00:00:00"
+								},
+								{
+									"key": "operation",
+									"value": "sum"
+								}
+							]
+						}
 					},
 					"response": []
 				}
