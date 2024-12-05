@@ -42,8 +42,24 @@ Format the output to be easily converted into a clean, well-structured PDF.
 """
 
 # create report
-@router.post("/", status_code=201, summary="Create a new report, save it to the database and return it")
-async def create_report(request: Request, name: str, site: str, kpi_names: Union[List[str],str] , frequency: str, start_date:str, end_date:str, user: User = Depends(verify_firebase_token)):
+@router.post("/", status_code=201, summary="Create a new report, save it to the database and return the PDF URL to download it")
+async def create_report(request: Request, name: str, site: int, start_date:str = "2024-09-30 00:00:00", end_date:str = "2024-10-14 00:00:00", user: User = Depends(verify_firebase_token), operation: str = "avg"):
+
+    """
+    Create a new report, save it to the database and return the PDF URL to download it
+
+    Args:
+    - name: the name of the report
+    - site: the site for which the report is created
+    - kpi_names: the names of the KPIs to include in the report
+    - start_date: the start date for the report
+    - end_date: the end date for the report
+    - user: the user creating the report
+    - operation: the operation to perform on the KPIs (sum, avg, min, max)
+
+    Returns:
+    - PDF URL to download the report
+    """
 
     start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
     end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
@@ -54,7 +70,7 @@ async def create_report(request: Request, name: str, site: str, kpi_names: Union
     #    raise HTTPException(status_code=400, detail="Report name already exists")
 
     # 1. Get corrispondent kpi data from the kpi service
-    # kpi_data = await kpi_service.get_kpi_data(request, kpi_names, start_date, end_date, frequency)
+    kb = await kpi_service.computeKPIForReport(request, site, start_date_obj, end_date_obj, None, operation)
 
     # 2. Compute the report with the kpi data as input
     try:
@@ -63,12 +79,12 @@ async def create_report(request: Request, name: str, site: str, kpi_names: Union
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": prompt},
-                {"role": "system", "content": f"Consider that you have the following Knowledge Base: {kpi_names}"},
+                {"role": "system", "content": f"Consider that you have the following Knowledge Base: {kb}"},
             ]
         )
         report_content = completion.choices[0].message.content
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Error getting chat response") from e
+        return ReportResponse(success=False, data=None, message=f"Error generating report: {e}")
 
     # 3. Convert report content to PDF
     try:
@@ -97,9 +113,7 @@ async def create_report(request: Request, name: str, site: str, kpi_names: Union
                 f.write(pdf_output.read())
             pdf_output.seek(0)  # Reset buffer after reading
         except Exception as e:
-            print(f"Error saving PDF locally: {e}")
             return ReportResponse(success=False, data=None, message="Error saving PDF locally")
-
     # 5. save pdf on firebase storage
     try:
         bucket = storage.bucket()
@@ -108,13 +122,13 @@ async def create_report(request: Request, name: str, site: str, kpi_names: Union
         blob.make_public()
         pdf_url = blob.public_url
     except Exception as e:
-        print(f"Error uploading PDF to Firebase Storage: {e}")
-        return ReportResponse(success=False, data=None, message="Error uploading PDF to Firebase Storage")
+        return ReportResponse(success=False, data=None, message="Error saving PDF to Firebase Storage")
 
     # 6. Save the report to the database
-    # TODO: Save the report to the database: name, site, kpi_names, frequency, start_date, end_date, user_uid, pdf_url
+    # TODO: Save the report to the database: name, site, kpi_names, start_date, end_date, user_uid, url
+    #report = await repo.create_report(request, name, site, kpi_names, start_date_obj, end_date_obj, user.uid, pdf_url)
 
-    return pdf_url
+    return ReportResponse(success=True, data=pdf_url, message="Report created successfully")
 
 # get all reports from all sites
 @router.get("/", status_code=200, response_model=ReportResponse, summary="Get all reports created by the user")

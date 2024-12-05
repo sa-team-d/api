@@ -203,16 +203,42 @@ async def getKPIById(id: str, request: Request | None = None, kpis_collection: C
     return kpi_detail
     
 
-async def listKPIs(request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> List[KPIOverview]:
-    kpis_collection = get_collection(request, kpis_collection, "kpis")
+async def listKPIs(site: int, request: Request | None = None, kpis_collection: Collection[KPI] | None = None) -> List[KPIOverview]:
+    sites_collection = get_collection(request, None, "sites")
 
-    kpis = kpis_collection.find({}, {
-        "_id": 1,
-        "name": 1,
-        "type": 1,
-        "description": 1,
-        "unite_of_measure": 1,
-    })
+    kpis = sites_collection.aggregate([
+        {
+            "$match":
+            {
+                "site_id": site
+            }
+        },
+        {
+            "$lookup":
+            {
+                "from": "kpis",
+                "localField": "kpis_ids",
+                "foreignField": "_id",
+                "as": "kpis"
+            }
+        },
+        {
+            "$unwind":
+            {
+                "path": "$kpis"
+            }
+        },
+        {
+            "$project":
+            {
+                "_id": "$kpis._id",
+                "name": "$kpis.name",
+                "type": "$kpis.type",
+                "description": "$kpis.description",
+                "unite_of_measure": "$kpis.unite_of_measure"
+            }
+        }
+    ])
     kpis = [KPIOverview(**kpi) async for kpi in kpis]
 
     if len(kpis) == 0:

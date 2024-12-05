@@ -41,12 +41,12 @@ class Report(ReportAbstract):
 
 class ReportDetail(Report):
     id: PydanticObjectId = Field(alias="_id")
-    
+
 class ReportOverview(ReportAbstract):
     id: PydanticObjectId = Field(alias="_id")
     machines: Optional[List[MachineOverview]] = Field(default=None, description="List of machines associated with the report")
 
 class ReportResponse(BaseModel):
     success: bool = Field(..., description="Indicates if the operation was successful")
-    data: Optional[ReportDetail | ReportOverview | List[ReportDetail] | List[ReportOverview]] = Field(None, description="Response data containing report information")
+    data: Optional[ReportDetail | ReportOverview | List[ReportDetail] | List[ReportOverview] | str] = Field(None, description="Response data containing report information")
     message: Optional[str] = Field(None, description="Response message")
