@@ -42,7 +42,7 @@ Format the output to be easily converted into a clean, well-structured PDF.
 
 # create report
 @router.post("/", status_code=201, summary="Create a new report, save it to the database and return the PDF URL to download it")
-async def create_report(request: Request, name: str, site: str, kpi_names: str, start_date:str = "2024-11-02 00:00:00", end_date:str = "2024-11-10 00:00:00", user: User = Depends(verify_firebase_token), operation: str = "sum"):
+async def create_report(request: Request, name: str, site: int, start_date:str = "2024-09-30 00:00:00", end_date:str = "2024-10-14 00:00:00", user: User = Depends(verify_firebase_token), operation: str = "avg"):
 
     """
     Create a new report, save it to the database and return the PDF URL to download it
@@ -59,8 +59,6 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str, 
     Returns:
     - PDF URL to download the report
     """
-
-    
 
     start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
     end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
@@ -85,7 +83,7 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str, 
         )
         report_content = completion.choices[0].message.content
     except Exception as e:
-        return ReportResponse(success=False, data=None, message="Error generating report")
+        return ReportResponse(success=False, data=None, message=f"Error generating report: {e}")
 
     # 3. Convert report content to PDF
     try:
@@ -125,7 +123,9 @@ async def create_report(request: Request, name: str, site: str, kpi_names: str, 
     except Exception as e:
         return ReportResponse(success=False, data=None, message="Error saving PDF to Firebase Storage")
 
-    report_insert_id = await repo.create_report(request, name, site, kpi_names, start_date_obj, end_date_obj, user.uid, pdf_url)
+    # 6. Save the report to the database
+    # TODO: Save the report to the database: name, site, kpi_names, start_date, end_date, user_uid, url
+    #report = await repo.create_report(request, name, site, kpi_names, start_date_obj, end_date_obj, user.uid, pdf_url)
 
     return ReportResponse(success=True, data=pdf_url, message="Report created successfully")
 

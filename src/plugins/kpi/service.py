@@ -68,8 +68,7 @@ async def computeKPIForReport(
     )
     for kpi in site.kpis:
         kpi_result = await computeKPIBySite(request, site_id, kpi.id, None, start_date, end_date, granularity_days, granularity_op)
-        print(f"KPI: {kpi.name} - {kpi_result}")
-        if len(kpi_result) != 1: raise Exception("error")
+        if len(kpi_result) != 1: raise Exception("No kpi result found")
         result.kpis.append(KPIReport(
             name=kpi.name,
             value=kpi_result[0].value,
