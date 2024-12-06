@@ -47,7 +47,7 @@ class Report(ReportAbstract):
 
 class ReportDetail(Report):
     id: PydanticObjectId = Field(alias="_id")
-    
+
 class ReportOverview(ReportAbstract):
     id: PydanticObjectId = Field(alias="_id")
     sites: Optional[List[SiteOverviewWithKPIs]] = Field(default=None, description="List of machines associated with the report")

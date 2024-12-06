@@ -4,7 +4,7 @@ from turtle import dot
 from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Depends, Request
 from fpdf import FPDF
-from sympy import content
+from sympy import Union, content
 
 from src.plugins.auth.firebase import verify_firebase_token_and_role, verify_firebase_token
 from src.plugins.user.schema import User
@@ -42,7 +42,7 @@ Format the output to be easily converted into a clean, well-structured PDF.
 
 # create report
 @router.post("/", status_code=201, summary="Create a new report, save it to the database and return the PDF URL to download it")
-async def create_report(request: Request, name: str, site: int, start_date:str = "2024-09-30 00:00:00", end_date:str = "2024-10-14 00:00:00", user: User = Depends(verify_firebase_token), operation: str = "avg"):
+async def create_report(request: Request, name: str, site: int, kpi_names: list[str] = None, start_date:str = "2024-09-30 00:00:00", end_date:str = "2024-10-14 00:00:00", user: User = Depends(verify_firebase_token), operation: str = "avg"):
 
     """
     Create a new report, save it to the database and return the PDF URL to download it
@@ -124,10 +124,11 @@ async def create_report(request: Request, name: str, site: int, start_date:str =
         return ReportResponse(success=False, data=None, message="Error saving PDF to Firebase Storage")
 
     # 6. Save the report to the database
-    # TODO: Save the report to the database: name, site, kpi_names, start_date, end_date, user_uid, url
-    #report = await repo.create_report(request, name, site, kpi_names, start_date_obj, end_date_obj, user.uid, pdf_url)
+    kpi_names_str = ",".join(kpi_names)
+    report_obj = Report(name=name, sites_id=[site], kpi_name=kpi_names_str, start_date=start_date_obj, end_date=end_date_obj, user_uid=user.uid, url=pdf_url)
+    report = await repo.create_report(request,report=report_obj)
 
-    return ReportResponse(success=True, data=pdf_url, message="Report created successfully")
+    return ReportResponse(success=True, data=report, message="Report created successfully")
 
 # get all reports from all sites
 @router.get("/", status_code=200, response_model=ReportResponse, summary="Get all reports created by the user")
