@@ -35,11 +35,14 @@ async def create_report_collection(request: Request = None, mongodb: AsyncIOMoto
     validator = {
     '$jsonSchema': {
         'bsonType': 'object',
-        'required': ['kpi_name', 'name', 'start_date', 'end_date', 'user_uid', 'sites_id', 'url'],
+        'required': ['kpi_names', 'name', 'start_date', 'end_date', 'user_uid', 'sites_id', 'url'],
         'properties': {
-            'kpi_name': {
-                'bsonType': 'string',
-                'description': 'must be a string and is required'
+            'kpi_names': {
+                'bsonType': 'array',
+                'items': {
+                    'bsonType': 'string'
+                },
+                'description': 'must be a list of strings and is required'
             },
             'name': {
                 'bsonType': 'string',

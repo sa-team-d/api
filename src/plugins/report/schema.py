@@ -7,7 +7,7 @@ from pydantic_mongo import PydanticObjectId
 from src.plugins.site.schema import SiteOverviewWithKPIs
 
 class ReportAbstract(BaseModel):
-    kpi_name: str = Field(..., description="Name of the KPI being reported")
+    kpi_names: list[str] = Field(..., description="Names of the KPIs being reported")
     name: str = Field(..., description="Report name")
     start_date: datetime = Field(default_factory=datetime.now, description="Start date of the report")
     end_date: datetime = Field(default_factory=datetime.now, description="End date of the report")
@@ -18,7 +18,7 @@ class ReportAbstract(BaseModel):
         from_attributes = True
         json_schema_extra = {
             "example": {
-                "kpi_name": "some kpi",
+                "kpi_names": ["some kpi"],
                 "name": "Monthly something",
                 "start_date": "2024-03-01T00:00:00",
                 "end_date": "2024-03-31T23:59:59",
@@ -35,7 +35,7 @@ class Report(ReportAbstract):
         from_attributes = True
         json_schema_extra = {
             "example": {
-                "kpi_name": "some kpi",
+                "kpi_names": ["some kpi"],
                 "name": "Monthly something",
                 "start_date": "2024-03-01T00:00:00",
                 "end_date": "2024-03-31T23:59:59",

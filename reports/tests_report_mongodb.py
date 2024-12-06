@@ -4,7 +4,7 @@ from src.plugins.report.schema import Report
 # Mock data for testing
 mock_reports = [
     Report(
-        kpi_name="Energy Efficiency",
+        kpi_names=["Energy Efficiency"],
         name="Monthly Energy Report - Site A",
         start_date=datetime(2024, 1, 1),
         end_date=datetime(2024, 1, 31),
@@ -13,7 +13,7 @@ mock_reports = [
         sites_id=[0, 2]
     ),
     Report(
-        kpi_name="Production Output",
+        kpi_names=["Production Output"],
         name="Q1 Production Summary",
         start_date=datetime(2024, 1, 1),
         end_date=datetime(2024, 3, 31),
@@ -22,7 +22,7 @@ mock_reports = [
         sites_id=[1, 2]
     ),
     Report(
-        kpi_name="Maintenance Efficiency",
+        kpi_names=["Maintenance Efficiency"],
         name="Weekly Maintenance Report",
         start_date=datetime(2024, 2, 1),
         end_date=datetime(2024, 2, 7),
@@ -31,7 +31,7 @@ mock_reports = [
         sites_id=[0, 1]
     ),
     Report(
-        kpi_name="Resource Utilization",
+        kpi_names=["Resource Utilization"],
         name="Daily Resource Report",
         start_date=datetime(2024, 2, 15),
         end_date=datetime(2024, 2, 15),
@@ -40,7 +40,7 @@ mock_reports = [
         sites_id=[2]
     ),
     Report(
-        kpi_name="Performance Metrics",
+        kpi_names=["Performance Metrics"],
         name="Annual Performance Review",
         start_date=datetime(2023, 1, 1),
         end_date=datetime(2023, 12, 31),

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 from bson import ObjectId
 from pymongo.collection import Collection
@@ -34,7 +35,7 @@ async def get_reports_with_site(user_uid, report_collection: Collection[Report],
                 "site": 1,
                 "name": 1,
                 "start_date": 1,
-                "kpi_name": 1,
+                "kpi_names": 1,
                 "user_uid": 1,
                 "end_date": 1,
                 "url": 1
@@ -52,7 +53,7 @@ async def get_reports_with_site(user_uid, report_collection: Collection[Report],
     return reports_overview
 
 
-async def all_reports(request: Request | None = None, report_collection: Collection[Report] | None = None):
+async def all_reports(request: Request | None = None):
     report_collection = get_collection(request=request, name="reports")
 
 
@@ -66,7 +67,7 @@ async def all_reports(request: Request | None = None, report_collection: Collect
 
 
 
-async def reports_by_site_id(request: Request, site_id: int, report_name:str =None,  user_uid: Optional[str] = None, report_collection: Collection[Report] | None = None):
+async def reports_by_site_id(request: Request, site_id: int, report_name:str =None,  user_uid: Optional[str] = None):
     report_collection = get_collection(request=request, name="reports")
 
     if user_uid and report_name:
@@ -79,7 +80,7 @@ async def reports_by_site_id(request: Request, site_id: int, report_name:str =No
         raise ReportNotFoundException(f"No reports found for site_id {site_id}")
     return reports
 
-async def reports_by_user_uid(request: Request, user_uid: str, report_collection: Collection[Report] | None = None):
+async def reports_by_user_uid(request: Request, user_uid: str):
     report_collection = get_collection(request=request, name="reports")
 
     reports = await get_reports_with_site(user_uid, report_collection)
@@ -88,10 +89,14 @@ async def reports_by_user_uid(request: Request, user_uid: str, report_collection
         raise ReportNotFoundException(f"No reports found for user_uid {user_uid}")
     return reports
 
-async def report_by_name(request: Request, name: str, report_collection: Collection[Report] | None = None):
+async def report_by_name(request: Request, name: str, user_uid: Optional[str] = None):
     report_collection = get_collection(request=request, name="reports")
 
-    cursor = report_collection.find({"name": name})
+    if user_uid:
+        cursor = report_collection.find({"name": name, "user_uid": user_uid})
+    else:
+        cursor = report_collection.find({"name": name})
+        
     report = await cursor.to_list(1)
 
     if report is None or len(report) == 0:
@@ -99,9 +104,29 @@ async def report_by_name(request: Request, name: str, report_collection: Collect
     return ReportDetail(**report[0])
 
 
-async def create_report(request: Request, report: Report, report_collection: Collection[Report] | None = None):
-    report_collection = get_collection(request=request, name="reports")
+async def create_report(request: Request, name: str, site: int, kpi_names: list[str], start_date_obj: datetime, end_date_obj: datetime, user_uid: str, pdf_url: str) -> ReportDetail:
+   
+    
+    try:
+    
+        report_collection = get_collection(request=request, name="reports")
+        report_obj = Report(name=name, sites_id=[site], kpi_names=kpi_names, start_date=start_date_obj, end_date=end_date_obj, user_uid=user_uid, url=pdf_url)
 
-    result = await report_collection.insert_one(report.model_dump())
+        result = await report_collection.insert_one(report_obj.model_dump())
 
-    return result.inserted_id
+        # Get the inserted document
+        created_report = await report_collection.find_one({"_id": result.inserted_id})
+        print(f"Created report: {created_report}")
+        # Convert to ReportDetail
+        return ReportDetail(
+            _id=str(created_report["_id"]),
+            name=created_report["name"],
+            sites_id=created_report["sites_id"],
+            kpi_names=created_report["kpi_names"],
+            start_date=created_report["start_date"],
+            end_date=created_report["end_date"], 
+            user_uid=created_report["user_uid"],
+            url=created_report["url"]
+        )
+    except Exception as e:
+        raise e
