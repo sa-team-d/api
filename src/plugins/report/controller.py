@@ -1,14 +1,13 @@
 from datetime import datetime
 import io
 from turtle import dot
-from typing import Optional, List, Union
-from fastapi import APIRouter, HTTPException, Depends, Request
+from typing import Annotated, Optional, List
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from fpdf import FPDF
-from sympy import content
+from sympy import Union, content
 
 from src.plugins.auth.firebase import verify_firebase_token_and_role, verify_firebase_token
 from src.plugins.user.schema import User
-from src.utils import get_collection
 
 from .schema import Report, ReportResponse
 from . import repository as repo
@@ -43,7 +42,7 @@ Format the output to be easily converted into a clean, well-structured PDF.
 
 # create report
 @router.post("/", status_code=201, summary="Create a new report, save it to the database and return the PDF URL to download it")
-async def create_report(request: Request, name: str, site: int, start_date:str = "2024-09-30 00:00:00", end_date:str = "2024-10-14 00:00:00", user: User = Depends(verify_firebase_token), operation: str = "avg"):
+async def create_report(request: Request, name: str, site: int, kpi_names:  Annotated[list[str] | None, Query()] = None, start_date:str = "2024-09-30 00:00:00", end_date:str = "2024-10-14 00:00:00", operation: str='avg', user: User = Depends(verify_firebase_token)):
 
     """
     Create a new report, save it to the database and return the PDF URL to download it
@@ -60,20 +59,41 @@ async def create_report(request: Request, name: str, site: int, start_date:str =
     Returns:
     - PDF URL to download the report
     """
+    try:
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
+    except Exception as e:
+        return ReportResponse(success=False, data=None, message="Invalid date format. Please use the format 'YYYY-MM-DD HH:MM:SS'")
 
-    start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
-    end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
+    if start_date_obj > end_date_obj:
+        return ReportResponse(success=False, data=None, message="Start date must be before end date")
 
-    # check if the report name already exists
-    #report = await repo.report_by_name(request, name, user.uid)
-    #if report:
-    #    raise HTTPException(status_code=400, detail="Report name already exists")
+    if not kpi_names:
+        return ReportResponse(success=False, data=None, message="KPI names must be provided")
+
+    if not site:
+        return ReportResponse(success=False, data=None, message="Site must be provided")
+
+    if not name:
+        return ReportResponse(success=False, data=None, message="Report name must be provided")
+
+    if not operation:
+        return ReportResponse(success=False, data=None, message="Operation must be provided")
+
+    try:
+        # check if the report name already exists
+        report = await repo.report_by_name(request, name, user.uid)
+        if report:
+            return ReportResponse(success=False, data=None, message="Report name already exists")
+    except Exception as e:
+        pass
 
     # 1. Get corrispondent kpi data from the kpi service
-    kb = await kpi_service.computeKPIForReport(request, site, start_date_obj, end_date_obj, None, operation)
+    kb = None
 
     # 2. Compute the report with the kpi data as input
     try:
+        kb = await kpi_service.computeKPIForReport(request, site, start_date_obj, end_date_obj, None, operation)
         client = OpenAI()
         completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -125,10 +145,12 @@ async def create_report(request: Request, name: str, site: int, start_date:str =
         return ReportResponse(success=False, data=None, message="Error saving PDF to Firebase Storage")
 
     # 6. Save the report to the database
-    # TODO: Save the report to the database: name, site, kpi_names, start_date, end_date, user_uid, url
-    #report = await repo.create_report(request, name, site, kpi_names, start_date_obj, end_date_obj, user.uid, pdf_url)
+    try:
 
-    return ReportResponse(success=True, data=pdf_url, message="Report created successfully")
+        report = await repo.create_report(request, name, site, kpi_names, start_date_obj, end_date_obj, user.uid, pdf_url)
+        return ReportResponse(success=True, data=report, message="Report created successfully")
+    except Exception as e:
+        return ReportResponse(success=False, data=None, message=str(e))
 
 # get all reports from all sites
 @router.get("/", status_code=200, response_model=ReportResponse, summary="Get all reports created by the user")
@@ -140,13 +162,25 @@ async def get_all_reports(request: Request, user: User = Depends(verify_firebase
         return ReportResponse(success=False, data=None, message=str(e))
 
 # filter reports by site
-@router.get("/filter", status_code=200, response_model=ReportResponse, summary="Get all reports for a specific machine created by the logged user")
-async def get_reports_by_machine_id(request: Request, machine_id: str, user: User = Depends(verify_firebase_token)):
+@router.get("/filter", status_code=200, response_model=ReportResponse, summary="Get all reports for a specific site created by the logged user")
+async def get_reports_by_site_id(request: Request, site_id: int = None, name:str = None, user: User = Depends(verify_firebase_token)):
     try:
-        if machine_id:
-            reports = await repo.reports_by_machine_id(request, machine_id, user.uid)
+        print(f"Site ID: {site_id} -- Name: {name}")
+        if site_id is not None:
+            reports = await repo.reports_by_site_id(request, site_id, name, user.uid)
+        elif name:
+            reports = await repo.report_by_name(request, name)
         else:
             return ReportResponse(success=False, data=None, message="No filter provided")
         return ReportResponse(success=True, data=reports, message="Reports retrieved successfully")
+    except Exception as e:
+        return ReportResponse(success=False, data=None, message=str(e))
+
+# delete report
+@router.delete("/{report_id}", status_code=200, response_model=ReportResponse, summary="Delete a report by ID")
+async def delete_report(request: Request, report_id: str, user: User = Depends(verify_firebase_token)):
+    try:
+        result = await repo.delete_report(request, report_id, user.uid)
+        return ReportResponse(success=True, data=result, message="Report deleted successfully")
     except Exception as e:
         return ReportResponse(success=False, data=None, message=str(e))

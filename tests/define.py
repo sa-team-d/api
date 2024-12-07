@@ -89,14 +89,13 @@ def compute_kpi(
 ):
 
     params = {
-        "machine_id": machine_id,
         "kpi_id": kpi_id,
         "start_date": start_date,
         "end_date": end_date,
         "granularity_days": granularity_days,
         "granularity_op": granularity_op,
     }
-    response = r.get(f'{baseUrl}{api_version}kpi/compute', params=params, headers=headers)
+    response = r.get(f'{baseUrl}{api_version}kpi/machine/{machine_id}/compute', params=params, headers=headers)
     return response.json()
 
 

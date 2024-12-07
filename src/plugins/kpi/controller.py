@@ -134,12 +134,50 @@ async def deleteKPI(
     user=Depends(verify_firebase_token)
 ):
     try:
+        print(f"Deleting kpi with id: {id}")
         success = await service.deleteKPIByID(request, id)
         return KPIResponse(
             success=success,
             message="KPI deleted successfully" if success else "KPI not found",
             data=None
         )
+    except Exception as e:
+        logger.error(f"Error deleting kpi: {e}")
+        return KPIResponse(success=False, data=None, message=f"Error deleting kpi: {str(e)}")
+
+
+@router.get("/name/{name}", status_code=200, response_model=KPIResponse, summary="Get kpi by name")
+async def getKPIByName(
+    request: Request,
+    name: str,
+    user=Depends(verify_firebase_token)
+):
+    try:
+        kpi = await service.getKPIByName(request, name)
+        if kpi:
+            return KPIResponse(success=True, data=kpi)
+        return KPIResponse(success=False, message=f"KPI with name {name} not found")
+    except Exception as e:
+        logger.error(f"Error getting kpi: {e}")
+        return KPIResponse(success=False, data=None, message=f"Error getting kpi: {str(e)}")
+    
+
+@router.delete("/name/{name}", status_code=200, response_model=KPIResponse, summary="Delete kpi by name")
+async def deleteKPIByName(
+    request: Request,
+    name: str,
+    user=Depends(verify_firebase_token)
+):
+    try:
+        kpi = await service.getKPIByName(request, name)
+        if kpi:
+            success = await service.deleteKPIByID(request, kpi.id)
+            return KPIResponse(
+                success=success,
+                message="KPI deleted successfully" if success else "KPI not found",
+                data=None
+            )
+        return KPIResponse(success=False, message=f"KPI with name {name} not found")
     except Exception as e:
         logger.error(f"Error deleting kpi: {e}")
         return KPIResponse(success=False, data=None, message=f"Error deleting kpi: {str(e)}")

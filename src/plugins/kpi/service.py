@@ -165,11 +165,14 @@ async def createKPI(
         raise ValueError("Missing KPIs")
     kpi = await repository.createKPI(name, type, description, unite_of_measure, children, formula, request=request)
     user = await userRepository.get_user_by_uid(uid, request=request)
+    
     await siteRepository.associateKPItoSite(user.site, kpi.id, request=request)
     return kpi
 
 async def deleteKPIByID(request: Request, id: str):
     await siteRepository.removeKPIfromSites(id, request=request)
+    await machineRepository.removeKPIfromMachines(id, request=request)
+    
     return await repository.deleteKPIByID(id, request=request)
 
 async def getKPIByName(request: Request, name: str):
