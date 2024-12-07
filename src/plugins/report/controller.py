@@ -64,19 +64,19 @@ async def create_report(request: Request, name: str, site: int, kpi_names:  Anno
         end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
     except Exception as e:
         return ReportResponse(success=False, data=None, message="Invalid date format. Please use the format 'YYYY-MM-DD HH:MM:SS'")
-    
+
     if start_date_obj > end_date_obj:
         return ReportResponse(success=False, data=None, message="Start date must be before end date")
-    
+
     if not kpi_names:
         return ReportResponse(success=False, data=None, message="KPI names must be provided")
-    
+
     if not site:
         return ReportResponse(success=False, data=None, message="Site must be provided")
-    
+
     if not name:
         return ReportResponse(success=False, data=None, message="Report name must be provided")
-    
+
     if not operation:
         return ReportResponse(success=False, data=None, message="Operation must be provided")
 
@@ -174,5 +174,14 @@ async def get_reports_by_site_id(request: Request, site_id: int = None, name:str
         else:
             return ReportResponse(success=False, data=None, message="No filter provided")
         return ReportResponse(success=True, data=reports, message="Reports retrieved successfully")
+    except Exception as e:
+        return ReportResponse(success=False, data=None, message=str(e))
+
+# delete report
+@router.delete("/{report_id}", status_code=200, response_model=ReportResponse, summary="Delete a report by ID")
+async def delete_report(request: Request, report_id: str, user: User = Depends(verify_firebase_token)):
+    try:
+        result = await repo.delete_report(request, report_id, user.uid)
+        return ReportResponse(success=True, data=result, message="Report deleted successfully")
     except Exception as e:
         return ReportResponse(success=False, data=None, message=str(e))

@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from bson import ObjectId
+from exceptiongroup import catch
 from pymongo.collection import Collection
 from fastapi import Request
 
@@ -39,7 +40,7 @@ async def get_reports_with_site(user_uid, report_collection: Collection[Report],
                 "user_uid": 1,
                 "end_date": 1,
                 "url": 1
-                
+
             }
         }
     ]
@@ -96,7 +97,7 @@ async def report_by_name(request: Request, name: str, user_uid: Optional[str] = 
         cursor = report_collection.find({"name": name, "user_uid": user_uid})
     else:
         cursor = report_collection.find({"name": name})
-        
+
     report = await cursor.to_list(1)
 
     if report is None or len(report) == 0:
@@ -105,10 +106,10 @@ async def report_by_name(request: Request, name: str, user_uid: Optional[str] = 
 
 
 async def create_report(request: Request, name: str, site: int, kpi_names: list[str], start_date_obj: datetime, end_date_obj: datetime, user_uid: str, pdf_url: str) -> ReportDetail:
-   
-    
+
+
     try:
-    
+
         report_collection = get_collection(request=request, name="reports")
         report_obj = Report(name=name, sites_id=[site], kpi_names=kpi_names, start_date=start_date_obj, end_date=end_date_obj, user_uid=user_uid, url=pdf_url)
 
@@ -124,9 +125,22 @@ async def create_report(request: Request, name: str, site: int, kpi_names: list[
             sites_id=created_report["sites_id"],
             kpi_names=created_report["kpi_names"],
             start_date=created_report["start_date"],
-            end_date=created_report["end_date"], 
+            end_date=created_report["end_date"],
             user_uid=created_report["user_uid"],
             url=created_report["url"]
         )
+    except Exception as e:
+        raise e
+
+
+async def delete_report(request: Request, report_id: str, user_uid: str):
+    try:
+        report_collection = get_collection(request=request, name="reports")
+        result = await report_collection.delete_one({"_id": ObjectId(report_id), "user_uid": user_uid})
+
+        if result.deleted_count == 0:
+            raise ReportNotFoundException(f"Report with id {report_id} not found")
+
+        return f"Report with id {report_id} deleted successfully"
     except Exception as e:
         raise e
