@@ -7,7 +7,7 @@ import pandas as pd
 from datetime import timedelta
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 import warnings
-
+from statsmodels.tsa.arima.model import ARIMA
 import os
 
 CSV_FILE_PATH = os.getenv("CSV_FILE_PATH")
@@ -317,6 +317,401 @@ def analyze_energy_anomalies():
         # Filter anomaly_summary for machines in the current group
         group_anomalies = anomaly_summary[anomaly_summary['decoded_asset_id'].isin(machine_ids)]
         anomalies_by_group[group] = group_anomalies['number_of_anomalies'].sum()
+
+    # Return results
+    return total_anomalies, anomalies_by_group
+
+def train_downtime_anomaly_model(data, output_path="models/downtime_arima_models/"):
+    """
+    Train ARIMA models for downtime anomalies and save the models for each machine.
+
+    Args:
+    - data (pd.DataFrame): Preprocessed data with columns ['time', 'asset_id', 'offline_time'].
+    - output_path (str): Directory to save ARIMA models for each machine.
+
+    Returns:
+    - None: Models are saved to the specified directory.
+    """
+    # Create the output directory if it doesn't exist
+    os.makedirs(output_path, exist_ok=True)
+
+    # Ensure 'time' column is in datetime format
+    data['time'] = pd.to_datetime(data['time'])
+
+    # Group by machine
+    machines = data['asset_id'].unique()
+    # print(f"Training ARIMA model for the Machines: ...")
+    for machine in machines:
+
+
+        # Filter data for the current machine
+        machine_data = data[data['asset_id'] == machine]
+        machine_grouped = machine_data.set_index('time')['offline_time']  # Set time as index for ARIMA
+
+        # Ensure time is sorted for ARIMA model
+        machine_grouped = machine_grouped.sort_index()
+
+        # Fit ARIMA model
+        try:
+            model = ARIMA(machine_grouped, order=(1, 1, 1))
+            model_fit = model.fit()
+
+            # Save the model
+            model_file = os.path.join(output_path, f"{machine}_arima.pkl")
+            joblib.dump(model_fit, model_file)
+            # print(f"Model for Machine {machine} saved at {model_file}")
+        except Exception as e:
+            print(f"Failed to train ARIMA model for Machine {machine}: {e}")
+
+def detect_downtime_anomalies(data, current_date, model_path="models/downtime_arima_models/", drift_threshold=0.005):
+    """
+    Detect downtime anomalies for the past week using ARIMA models.
+
+    Args:
+    - data (pd.DataFrame): Preprocessed data with 'time', 'asset_id', and 'offline_time'.
+    - current_date (pd.Timestamp): Current date for anomaly detection.
+    - model_path (str): Directory where ARIMA models are saved.
+    - drift_threshold (float): Threshold for drift detection.
+
+    Returns:
+    - pd.DataFrame: Summary of anomalies detected for each machine.
+    """
+    # Ensure 'time' column is in datetime format
+    data['time'] = pd.to_datetime(data['time'])
+
+    # Step 1: Check for drift
+    drift_detected = detect_drift(data, ['offline_time'], current_date, drift_threshold)
+    if drift_detected:
+        # print("Drift detected. Retraining models...")
+        train_downtime_anomaly_model(data, output_path=model_path)
+    else:
+        # print("No drift detected. Using existing models.")
+         pass
+
+    # Step 2: Group by machine and detect anomalies
+    summary_table = []
+    for machine in data['asset_id'].unique():
+        # Filter data for the current machine
+        machine_data = data[data['asset_id'] == machine]
+        machine_grouped = machine_data.set_index('time')['offline_time']  # Use 'offline_time'
+
+        # Ensure time is sorted for ARIMA predictions
+        machine_grouped = machine_grouped.sort_index()
+
+        # Load the model
+        model_file = os.path.join(model_path, f"{machine}_arima.pkl")
+        if not os.path.exists(model_file):
+            # print(f"Model for Machine {machine} not found. Skipping...")
+            continue
+        model_fit = joblib.load(model_file)
+
+        # Predict and calculate residuals
+        predictions = model_fit.predict(start=0, end=len(machine_grouped) - 1, dynamic=False)
+        residuals = machine_grouped - predictions
+
+        # Detect anomalies
+        threshold = 6 * residuals.std()
+        anomalies = residuals[residuals > threshold]
+
+        # Append results to summary table
+        if len(anomalies) > 0:
+            summary_table.append({
+                'Machine ID': machine,
+                'Number of Anomalies': len(anomalies),
+                'Timestamps': list(anomalies.index.strftime('%Y-%m-%d'))
+            })
+
+    # Return the summary as a DataFrame
+    if summary_table:
+        return pd.DataFrame(summary_table)
+    else:
+        # print("No anomalies detected for any machine.")
+        return pd.DataFrame(columns=['Machine ID', 'Number of Anomalies', 'Timestamps'])
+
+def analyze_downtime_anomalies():
+    """
+    Final usage function for downtime anomaly detection.
+    Internally calls all the necessary steps and returns the final results.
+
+    Returns:
+    - total_anomalies (int): Total anomalies detected across all machines for the week.
+    - anomalies_by_group (dict): Dictionary of anomalies grouped by machine categories.
+    """
+    # Step 1: Fetch the raw data
+    kpi_columns = ['offline_time']
+
+    data = data_fetch(kpi_columns)  # Fetching data using the prebuilt function
+    # print(data.columns)
+    # Step 2: Define the machine name-to-ID mapping
+    Name_Id = {
+        'Large Capacity Cutting Machine 1': 'ast-yhccl1zjue2t',
+        'Riveting Machine': 'ast-o8xtn5xa8y87',
+        'Medium Capacity Cutting Machine 1': 'ast-ha448od5d6bd',
+        'Laser Cutter': 'ast-xpimckaf3dlf',
+        'Large Capacity Cutting Machine 2': 'ast-6votor3o4i9l',
+        'Medium Capacity Cutting Machine 2': 'ast-5aggxyk5hb36',
+        'Testing Machine 1': 'ast-nrd4vl07sffd',
+        'Testing Machine 2': 'ast-pu7dfrxjf2ms',
+        'Low Capacity Cutting Machine 1': 'ast-6nv7viesiao7',
+        'Medium Capacity Cutting Machine 3': 'ast-anxkweo01vv2',
+        'Assembly Machine 1': 'ast-pwpbba0ewprp',
+        'Laser Welding Machine 1': 'ast-hnsa8phk2nay',
+        'Assembly Machine 2': 'ast-upqd50xg79ir',
+        'Assembly Machine 3': 'ast-sfio4727eub0',
+        'Laser Welding Machine 2': 'ast-206phi0b9v6p',
+        'Testing Machine 3': 'ast-06kbod797nnp'
+    }
+
+    machine_id_mapping = {
+        'Metal Cutting Machines': [
+            Name_Id['Large Capacity Cutting Machine 1'],
+            Name_Id['Large Capacity Cutting Machine 2'],
+            Name_Id['Medium Capacity Cutting Machine 1'],
+            Name_Id['Medium Capacity Cutting Machine 2'],
+            Name_Id['Medium Capacity Cutting Machine 3'],
+            Name_Id['Low Capacity Cutting Machine 1']
+        ],
+        'Laser Welding Machines': [
+            Name_Id['Laser Welding Machine 1'],
+            Name_Id['Laser Welding Machine 2']
+        ],
+        'Assembly Machines': [
+            Name_Id['Assembly Machine 1'],
+            Name_Id['Assembly Machine 2'],
+            Name_Id['Assembly Machine 3']
+        ],
+        'Testing Machines': [
+            Name_Id['Testing Machine 1'],
+            Name_Id['Testing Machine 2'],
+            Name_Id['Testing Machine 3']
+        ],
+        'Riveting Machine': [
+            Name_Id['Riveting Machine']
+        ],
+        'Laser Cutter': [
+            Name_Id['Laser Cutter']
+        ]
+    }
+
+    # Step 3: Define current date for usage
+    current_date = pd.Timestamp('2024-10-19').tz_localize('UTC')
+
+    # Step 4: Detect anomalies (this function handles preprocessing, drift detection, and retraining)
+    anomaly_summary = detect_downtime_anomalies(data, current_date)
+
+    # Step 5: Aggregate results
+    if anomaly_summary.empty:
+        return 0, {group: 0 for group in machine_id_mapping.keys()}
+
+    # Calculate total anomalies
+    total_anomalies = anomaly_summary['Number of Anomalies'].sum()
+
+    # Calculate anomalies by machine group
+    anomalies_by_group = {}
+    for group, machine_ids in machine_id_mapping.items():
+        group_anomalies = anomaly_summary[anomaly_summary['Machine ID'].isin(machine_ids)]
+        anomalies_by_group[group] = group_anomalies['Number of Anomalies'].sum()
+
+    # Return results
+    return total_anomalies, anomalies_by_group
+
+from sklearn.cluster import DBSCAN
+from sklearn.preprocessing import StandardScaler
+
+def train_cycle_quality_anomaly_model(data, output_path="models/cycle_quality_models/"):
+    """
+    Train DBSCAN models for cycle quality anomaly detection and save them.
+
+    Args:
+    - data (pd.DataFrame): Preprocessed data with columns ['time', 'asset_id', 'bad_cycles', 'good_cycles'].
+    - output_path (str): Directory to save DBSCAN models for each machine.
+
+    Returns:
+    - None: Models are saved to the specified directory.
+    """
+    os.makedirs(output_path, exist_ok=True)
+
+    # Preprocess data
+    data['good_to_bad_ratio'] = data['good_cycles'] / (data['bad_cycles'] + 1e-6)  # Avoid division by zero
+
+    # Define ratio threshold for outlier removal
+    ratio_threshold = data['good_to_bad_ratio'].quantile(0.98)
+    data = data[data['good_to_bad_ratio'] <= ratio_threshold]
+
+    for machine in data['asset_id'].unique():
+        # print(f"Training DBSCAN model for Machine: {machine}")
+
+        # Filter data for the current machine
+        machine_data = data[data['asset_id'] == machine]
+
+        # Normalize features
+        scaler = StandardScaler()
+        machine_data[['bad_cycles_scaled', 'ratio_scaled']] = scaler.fit_transform(
+            machine_data[['bad_cycles', 'good_to_bad_ratio']]
+        )
+
+        # Train DBSCAN
+        dbscan = DBSCAN(eps=1.5, min_samples=3)
+        dbscan.fit(machine_data[['bad_cycles_scaled', 'ratio_scaled']])
+
+        # Save the model and scaler
+        model_file = os.path.join(output_path, f"{machine}_dbscan.pkl")
+        scaler_file = os.path.join(output_path, f"{machine}_scaler.pkl")
+        joblib.dump(dbscan, model_file)
+        joblib.dump(scaler, scaler_file)
+        # print(f"Model for Machine {machine} saved at {model_file}")
+
+def detect_cycle_quality_anomalies(data, current_date, model_path="models/cycle_quality_models/", drift_threshold=0.005):
+    """
+    Detect cycle quality anomalies using DBSCAN models.
+
+    Args:
+    - data (pd.DataFrame): Preprocessed data with columns ['time', 'asset_id', 'bad_cycles', 'good_cycles'].
+    - current_date (pd.Timestamp): Current date for anomaly detection.
+    - model_path (str): Directory where DBSCAN models are saved.
+    - drift_threshold (float): Threshold for drift detection.
+
+    Returns:
+    - pd.DataFrame: Summary of anomalies detected for each machine.
+    """
+    os.makedirs(model_path, exist_ok=True)
+
+    # Ensure 'time' column is in datetime format
+    data['time'] = pd.to_datetime(data['time'])
+
+    # Preprocess data
+    data['good_to_bad_ratio'] = data['good_cycles'] / (data['bad_cycles'] + 1e-6)
+
+    # Check for drift
+    drift_detected = detect_drift(data, ['good_to_bad_ratio'], current_date, drift_threshold)
+    if drift_detected:
+        # print("Drift detected. Retraining models...")
+        train_cycle_quality_anomaly_model(data, output_path=model_path)
+    else:
+        # print("No drift detected. Using existing models.")
+        pass
+    # Identify anomalies for each machine
+    anomalies_summary = []
+    for machine in data['asset_id'].unique():
+        # Load the model and scaler
+        model_file = os.path.join(model_path, f"{machine}_dbscan.pkl")
+        scaler_file = os.path.join(model_path, f"{machine}_scaler.pkl")
+        if not os.path.exists(model_file) or not os.path.exists(scaler_file):
+            # print(f"Model or scaler for Machine {machine} not found. Skipping...")
+            continue
+        dbscan = joblib.load(model_file)
+        scaler = joblib.load(scaler_file)
+
+        # Filter data for the current machine
+        machine_data = data[data['asset_id'] == machine]
+
+        # Normalize features
+        machine_data[['bad_cycles_scaled', 'ratio_scaled']] = scaler.transform(
+            machine_data[['bad_cycles', 'good_to_bad_ratio']]
+        )
+
+        # Predict anomalies
+        machine_data['cluster'] = dbscan.fit_predict(machine_data[['bad_cycles_scaled', 'ratio_scaled']])
+        machine_data['is_anomaly'] = machine_data['cluster'] == -1
+
+        # Summarize anomalies
+        anomalies = machine_data[machine_data['is_anomaly']]
+        if not anomalies.empty:
+            anomalies_summary.append({
+                'Machine ID': machine,
+                'Number of Anomalies': anomalies['is_anomaly'].sum(),
+                'Timestamps': list(anomalies['time'].dt.strftime('%Y-%m-%d'))
+            })
+
+    # Return summary as DataFrame
+    if anomalies_summary:
+        return pd.DataFrame(anomalies_summary)
+    else:
+        # print("No anomalies detected for any machine.")
+        return pd.DataFrame(columns=['Machine ID', 'Number of Anomalies', 'Timestamps'])
+
+def analyze_cycle_quality_anomalies():
+    """
+    Final usage function for cycle quality anomaly detection.
+    Internally calls all necessary steps and returns the final results.
+
+    Returns:
+    - total_anomalies (int): Total anomalies detected across all machines for the week.
+    - anomalies_by_group (dict): Dictionary of anomalies grouped by machine categories.
+    """
+    # Step 1: Fetch the raw data
+    kpi = ['bad_cycles', 'good_cycles']
+    data = data_fetch(kpi)  # Fetch data using the prebuilt function
+
+    # Step 2: Define the machine name-to-ID mapping
+    Name_Id = {
+        'Large Capacity Cutting Machine 1': 'ast-yhccl1zjue2t',
+        'Riveting Machine': 'ast-o8xtn5xa8y87',
+        'Medium Capacity Cutting Machine 1': 'ast-ha448od5d6bd',
+        'Laser Cutter': 'ast-xpimckaf3dlf',
+        'Large Capacity Cutting Machine 2': 'ast-6votor3o4i9l',
+        'Medium Capacity Cutting Machine 2': 'ast-5aggxyk5hb36',
+        'Testing Machine 1': 'ast-nrd4vl07sffd',
+        'Testing Machine 2': 'ast-pu7dfrxjf2ms',
+        'Low Capacity Cutting Machine 1': 'ast-6nv7viesiao7',
+        'Medium Capacity Cutting Machine 3': 'ast-anxkweo01vv2',
+        'Assembly Machine 1': 'ast-pwpbba0ewprp',
+        'Laser Welding Machine 1': 'ast-hnsa8phk2nay',
+        'Assembly Machine 2': 'ast-upqd50xg79ir',
+        'Assembly Machine 3': 'ast-sfio4727eub0',
+        'Laser Welding Machine 2': 'ast-206phi0b9v6p',
+        'Testing Machine 3': 'ast-06kbod797nnp'
+    }
+
+    machine_id_mapping = {
+        'Metal Cutting Machines': [
+            Name_Id['Large Capacity Cutting Machine 1'],
+            Name_Id['Large Capacity Cutting Machine 2'],
+            Name_Id['Medium Capacity Cutting Machine 1'],
+            Name_Id['Medium Capacity Cutting Machine 2'],
+            Name_Id['Medium Capacity Cutting Machine 3'],
+            Name_Id['Low Capacity Cutting Machine 1']
+        ],
+        'Laser Welding Machines': [
+            Name_Id['Laser Welding Machine 1'],
+            Name_Id['Laser Welding Machine 2']
+        ],
+        'Assembly Machines': [
+            Name_Id['Assembly Machine 1'],
+            Name_Id['Assembly Machine 2'],
+            Name_Id['Assembly Machine 3']
+        ],
+        'Testing Machines': [
+            Name_Id['Testing Machine 1'],
+            Name_Id['Testing Machine 2'],
+            Name_Id['Testing Machine 3']
+        ],
+        'Riveting Machine': [
+            Name_Id['Riveting Machine']
+        ],
+        'Laser Cutter': [
+            Name_Id['Laser Cutter']
+        ]
+    }
+
+    # Step 3: Define current date
+    current_date = pd.Timestamp('2024-10-19').tz_localize('UTC')
+
+    # Step 4: Detect anomalies (this function handles preprocessing, drift detection, and retraining)
+    anomaly_summary = detect_cycle_quality_anomalies(data, current_date)
+
+    # Step 5: Aggregate results
+    if anomaly_summary.empty:
+        return 0, {group: 0 for group in machine_id_mapping.keys()}
+
+    # Calculate total anomalies
+    total_anomalies = anomaly_summary['Number of Anomalies'].sum()
+
+    # Calculate anomalies by machine group
+    anomalies_by_group = {}
+    for group, machine_ids in machine_id_mapping.items():
+        group_anomalies = anomaly_summary[anomaly_summary['Machine ID'].isin(machine_ids)]
+        anomalies_by_group[group] = group_anomalies['Number of Anomalies'].sum()
 
     # Return results
     return total_anomalies, anomalies_by_group

@@ -5,9 +5,9 @@ from sqlalchemy import func
 
 from . import service
 from .schema import Anomaly, AnomalyResponse
-from typing import List, Optional, Union
+from typing import Annotated, List, Optional, Union
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 from src.plugins.auth.firebase import verify_firebase_token
 
 import pandas as pd
@@ -24,7 +24,7 @@ router = APIRouter(prefix=f"/api/{API_VERSION}/anomalies", tags=["Anomalies"])
 @router.post("/", status_code=200, response_model=AnomalyResponse, summary="Get all anomalies")
 async def getAnomalies(
     request: Request,
-    anomaly_type: Union[List[str], str] = 'energy',
+    anomaly_type: Annotated[list[str] | None, Query()] = 'energy',
     user=Depends(verify_firebase_token)
 ):
     """
@@ -43,7 +43,6 @@ async def getAnomalies(
                     n, data = service.__getattribute__(function_name)()
                     for k,v in data.items():
                         data[k] = str(v)
-                        print(type(v))
                     results.append(Anomaly(total_anomalies=str(n), anomalies_by_group=data))
                 except Exception as e:
                     print(e)
