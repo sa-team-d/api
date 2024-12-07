@@ -53,6 +53,16 @@ async def getChatResponse(
     query: str,
     user=Depends(verify_firebase_token)
 ):
+    """
+    This endpoint is used to get a response from the chatbot based on the query provided.
+
+    Args:
+    - site_id: int - The site id
+    - query: str - The query to send to the chatbot
+
+    Returns:
+    - str: The response from the chatbot
+    """
     # get kb
     all_kpi: List[KPIOverview] = await kpi_service.listKPIs(site=site_id, request=request)
 

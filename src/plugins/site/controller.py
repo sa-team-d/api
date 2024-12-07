@@ -23,6 +23,15 @@ async def getSiteById(
     id: int,
     user=Depends(verify_firebase_token)
 ):
+    """
+    Get site by id
+
+    Args:
+    - id: int: site id
+
+    Returns:
+    - SiteResponse: site response object with the site content
+    """
     try:
         site = await service.getSiteById(request, id)
         if site:
@@ -31,7 +40,7 @@ async def getSiteById(
     except Exception as e:
         logger.error(f"Error getting site: {e}")
         return  SiteResponse(success=False, data=None, message=f"Error getting site: {str(e)}")
-    
+
 @router.get("/{id}/associate", status_code=200, response_model=SiteResponse, summary="Associate kpi to site")
 async def getSiteById(
     request: Request,
@@ -39,6 +48,16 @@ async def getSiteById(
     kpi_id: str,
     user=Depends(verify_firebase_token)
 ):
+    """
+    Associate kpi to site
+
+    Args:
+    - id: int: site id
+    - kpi_id: str: kpi id
+
+    Returns:
+    - SiteResponse: site response object with site content
+    """
     try:
         site = await service.associateKPItoSite(request, id, kpi_id)
         return SiteResponse(success=True, data=site)

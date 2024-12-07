@@ -11,6 +11,7 @@ FIREBASE_API_KEY = os.getenv("FIREBASE_API_KEY")
 debug_mode = os.getenv("DEBUG")
 
 def get_uid_and_token(email: str, password: str):
+    """Get the user ID and ID token for a user with the given email and password."""
     url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={FIREBASE_API_KEY}"
     payload = {
         "email": email,

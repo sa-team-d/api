@@ -35,9 +35,12 @@ The API documentation is available at `http://localhost:8000/docs` as a Swagger 
 ## Plugins
 The API is organized in plugins, each containing a set of endpoints related to a specific functionality. The available plugins are:
 - `kpi`: Key Performance Indicators
-- `machine`: Machines
-- `user`: Users
-- `TODO`: Add new plugins
+- `machine`: Machines query
+- `user`: Users interaction
+- `chat`: Chat interaction
+- `site`: Sites query
+- `report`: Reports query
+- `auth`: Authentication and Authorization
 
 ## Contact
 For any questions or issues, please contact the project maintainers:

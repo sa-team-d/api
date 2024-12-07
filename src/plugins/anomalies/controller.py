@@ -30,9 +30,9 @@ async def getAnomalies(
     """
     Get all anomalies for the specified KPIs.
     Args:
-    - anomaly_type (Union[List[str], str], optional): The type of anomaly to detect. Possible anomaly values are ['energy', 'downtime', 'cycle_quality'].
+    - anomaly_type (list[str]): The type of anomaly to get. Default is 'energy'.
     Returns:
-    - AnomalyResponse: Anomaly response object containing the anomalies data.
+    - AnomalyResponse: Anomaly response object containing total anomalies and anomalies by machine category.
     """
     results = []
     try:

@@ -18,6 +18,12 @@ router = APIRouter(prefix=f"/api/{API_VERSION}/machine", tags=["Machine"])
 # list all machines
 @router.get("/",status_code=200, response_model=MachineResponse, summary="Get all machines in the dataset")
 async def get_all_machines(request:Request, user=Depends(verify_firebase_token)):
+    """
+    Get all machines in the dataset
+
+    Returns:
+    - MachineResponse: A response object containing the list of machines
+    """
     try:
         machines = await repository.get_all(request)
 
@@ -30,6 +36,16 @@ async def get_all_machines(request:Request, user=Depends(verify_firebase_token))
 # filter
 @router.get("/filter", response_model=MachineResponse, status_code=201, summary="Filter machines by type or name")
 async def filter_machines(request: Request, machine_name: str = None, machine_type: str = None, user=Depends(verify_firebase_token)):
+    """
+    Filter machines by type or name
+
+    Args:
+    - machine_name: The name of the machine to filter by
+    - machine_type: The type of the machine to filter by
+
+    Returns:
+    - MachineResponse: A response object containing the list of machines that match the filter
+    """
     try:
         if machine_name:
             machines = await repository.get_by_name(machine_name, machine_type=machine_type, request=request)
@@ -45,6 +61,15 @@ async def filter_machines(request: Request, machine_name: str = None, machine_ty
 # get machine by ID
 @router.get("/{machine_id}", response_model=MachineResponse, status_code=200, summary="Get machine by ID")
 async def get_machine_by_id(request: Request, machine_id: str):
+    """
+    Get machine by ID
+
+    Args:
+    - machine_id: The ID of the machine to retrieve
+
+    Returns:
+    - MachineResponse: A response object containing the machine
+    """
     try:
 
         machine = await repository.get_by_id(machine_id, request=request)

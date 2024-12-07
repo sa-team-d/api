@@ -31,6 +31,9 @@ FIREBASE_BUCKET = os.getenv("FIREBASE_BUCKET")
 CSV_FILE_PATH = os.getenv("CSV_FILE_PATH")
 
 def initialize_firebase():
+    """
+    Initialize the firebase app and download the csv file from firebase storage
+    """
     cred = credentials.Certificate({
         "type": f"{FIREBASE_TYPE}",
         "project_id": f"{FIREBASE_PROJECT_ID}",

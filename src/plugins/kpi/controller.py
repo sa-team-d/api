@@ -23,6 +23,16 @@ async def getKPIById(
     id: str,
     user=Depends(verify_firebase_token)
 ):
+    """
+    Get a KPI by ID.
+
+    Args:
+        id (str): The ID of the KPI.
+        user: The authenticated user, obtained via dependency injection.
+
+    Returns:
+        KPIResponse: The response containing the success status, data, and message.
+    """
     try:
         kpi = await service.getKPIById(request, id)
         if kpi:
@@ -44,6 +54,21 @@ async def computeKPIByMachine(
     granularity_days: Optional[int] = None,
     user=Depends(verify_firebase_token)
 ):
+    """
+    Compute the KPI value associated with a specific machine.
+
+    Args:
+        machine_id (str): The ID of the machine.
+        kpi_id (str): The ID of the KPI to compute.
+        start_date (str): The start date for KPI computation in "%Y-%m-%d %H:%M:%S" format.
+        end_date (str): The end date for KPI computation in "%Y-%m-%d %H:%M:%S" format.
+        granularity_op (str): The granularity operation.
+        granularity_days (Optional[int], optional): The number of days for granularity. Defaults to None.
+        user: The authenticated user, obtained via dependency injection.
+
+    Returns:
+        KPIResponse: The response containing the success status, data, and message.
+    """
     try:
         start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
         end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
@@ -66,6 +91,22 @@ async def computeKPIBySite(
     category: Optional[str] = None,
     user=Depends(verify_firebase_token)
 ):
+    """
+    Compute the KPI value associated with a specific site.
+
+    Args:
+        site_id (int): The ID of the site.
+        kpi_id (str): The ID of the KPI to compute.
+        start_date (str): The start date for KPI computation in "%Y-%m-%d %H:%M:%S" format.
+        end_date (str): The end date for KPI computation in "%Y-%m-%d %H:%M:%S" format.
+        granularity_op (str): The granularity operation.
+        granularity_days (Optional[int], optional): The number of days for granularity. Defaults to None.
+        category (Optional[str], optional): The category of the KPI. Defaults to None.
+        user: The authenticated user, obtained via dependency injection.
+
+    Returns:
+        KPIResponse: The response containing the success status, data, and message.
+    """
     try:
         start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
         end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
@@ -84,6 +125,19 @@ async def computeKPIForReport(
     granularity_op: str,
     user=Depends(verify_firebase_token)
 ):
+    """
+    Compute the KPI value associated with a specific site for report.
+
+    Args:
+        site_id (int): The ID of the site.
+        start_date (str): The start date for KPI computation in "%Y-%m-%d %H:%M:%S" format.
+        end_date (str): The end date for KPI computation in "%Y-%m-%d %H:%M:%S" format.
+        granularity_op (str): The granularity operation.
+        user: The authenticated user, obtained via dependency injection.
+
+    Returns:
+        ReportResponse: The response containing the success status, data, and message.
+    """
     try:
         start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
         end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
@@ -95,6 +149,16 @@ async def computeKPIForReport(
 
 @router.get("/",status_code=200, response_model=KPIResponse, summary="List kpis")
 async def listKPI(request: Request, site: int, user=Depends(verify_firebase_token)):
+    """
+    List all KPIs.
+
+    Args:
+        site (int): The ID of the site.
+        user: The authenticated user, obtained via dependency injection.
+
+    Returns:
+        KPIResponse: The response containing the success status, data, and message.
+    """
     try:
         all_kpi: List[KPIOverview] = await service.listKPIs(site, request)
         return KPIResponse(success=True, data=all_kpi, message="KPIs listed successfully")
@@ -108,6 +172,16 @@ async def createKPI(
     item: CreateKPIBody,
     user=Depends(verify_firebase_token)
 ):
+    """
+    Create a new KPI.
+
+    Args:
+        item (CreateKPIBody): The KPI details.
+        user: The authenticated user, obtained via dependency injection.
+
+    Returns:
+        KPIResponse: The response containing the success status, data, and message.
+    """
     try:
         exist = await service.getKPIByName(request, item.name)
         if exist:
@@ -126,13 +200,23 @@ async def createKPI(
         logger.error(f"Error creating kpi: {e}")
         return KPIResponse(success=False, data=None, message=f"Error creating kpi: {str(e)}")
 
-  
+
 @router.delete("/{id}", status_code=200, response_model=KPIResponse, summary="Delete kpi")
 async def deleteKPI(
     request: Request,
     id: str,
     user=Depends(verify_firebase_token)
 ):
+    """
+    Delete a KPI by ID.
+
+    Args:
+        id (str): The ID of the KPI to delete.
+        user: The authenticated user, obtained via dependency injection.
+
+    Returns:
+        KPIResponse: The response containing the success status, data, and message.
+    """
     try:
         print(f"Deleting kpi with id: {id}")
         success = await service.deleteKPIByID(request, id)
@@ -152,6 +236,16 @@ async def getKPIByName(
     name: str,
     user=Depends(verify_firebase_token)
 ):
+    """
+    Get a KPI by name.
+
+    Args:
+        name (str): The name of the KPI.
+        user: The authenticated user, obtained via dependency injection.
+
+    Returns:
+        KPIResponse: The response containing the success status, data, and message.
+    """
     try:
         kpi = await service.getKPIByName(request, name)
         if kpi:
@@ -160,7 +254,7 @@ async def getKPIByName(
     except Exception as e:
         logger.error(f"Error getting kpi: {e}")
         return KPIResponse(success=False, data=None, message=f"Error getting kpi: {str(e)}")
-    
+
 
 @router.delete("/name/{name}", status_code=200, response_model=KPIResponse, summary="Delete kpi by name")
 async def deleteKPIByName(
@@ -168,6 +262,16 @@ async def deleteKPIByName(
     name: str,
     user=Depends(verify_firebase_token)
 ):
+    """
+    Delete a KPI by name.
+
+    Args:
+        name (str): The name of the KPI.
+        user: The authenticated user, obtained via dependency injection.
+
+    Returns:
+        KPIResponse: The response containing the success status, data, and message.
+    """
     try:
         kpi = await service.getKPIByName(request, name)
         if kpi:

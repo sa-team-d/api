@@ -155,6 +155,15 @@ async def create_report(request: Request, name: str, site: int, kpi_names:  Anno
 # get all reports from all sites
 @router.get("/", status_code=200, response_model=ReportResponse, summary="Get all reports created by the user")
 async def get_all_reports(request: Request, user: User = Depends(verify_firebase_token)):
+    """
+    Get all reports created by the user
+
+    Args:
+    - user: the user creating the report
+
+    Returns:
+    - List of reports created by the user
+    """
     try:
         reports = await repo.reports_by_user_uid(request, user.uid)
         return ReportResponse(success=True, data=reports, message="Reports retrieved successfully")
@@ -164,6 +173,16 @@ async def get_all_reports(request: Request, user: User = Depends(verify_firebase
 # filter reports by site
 @router.get("/filter", status_code=200, response_model=ReportResponse, summary="Get all reports for a specific site created by the logged user")
 async def get_reports_by_site_id(request: Request, site_id: int = None, name:str = None, user: User = Depends(verify_firebase_token)):
+    """
+    Get all reports for a specific site created by the logged user
+
+    Args:
+    - site_id: the site ID to filter the reports
+    - name: the name of the report to filter
+
+    Returns:
+    - List of reports for the site
+    """
     try:
         print(f"Site ID: {site_id} -- Name: {name}")
         if site_id is not None:
@@ -179,6 +198,16 @@ async def get_reports_by_site_id(request: Request, site_id: int = None, name:str
 # delete report
 @router.delete("/{report_id}", status_code=200, response_model=ReportResponse, summary="Delete a report by ID")
 async def delete_report(request: Request, report_id: str, user: User = Depends(verify_firebase_token)):
+    """
+    Delete a report by ID
+
+    Args:
+    - report_id: the ID of the report to delete
+    - user: the user deleting the report
+
+    Returns:
+    - Success message if the report is deleted
+    """
     try:
         result = await repo.delete_report(request, report_id, user.uid)
         return ReportResponse(success=True, data=result, message="Report deleted successfully")
