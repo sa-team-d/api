@@ -49,11 +49,12 @@ router = APIRouter(prefix=f"/api/{API_VERSION}/chat", tags=["Chat"])
 @router.post("/", status_code=200, summary="Get chat response")
 async def getChatResponse(
     request: Request,
+    site_id: int,
     query: str,
     user=Depends(verify_firebase_token)
 ):
     # get kb
-    all_kpi: List[KPIOverview] = await kpi_service.listKPIs(request)
+    all_kpi: List[KPIOverview] = await kpi_service.listKPIs(site=site_id, request=request)
 
     all_machines = await machine_repository.get_all(request)
     # get only the machine names

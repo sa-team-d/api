@@ -54,5 +54,5 @@ class ReportOverview(ReportAbstract):
 
 class ReportResponse(BaseModel):
     success: bool = Field(..., description="Indicates if the operation was successful")
-    data: Optional[ReportDetail | ReportOverview | List[ReportDetail] | List[ReportOverview]|str] = Field(None, description="Response data containing report information")
+    data: Optional[ReportDetail | ReportOverview | List[ReportDetail] | List[ReportOverview] | str] = Field(None, description="Response data containing report information")
     message: Optional[str] = Field(None, description="Response message")

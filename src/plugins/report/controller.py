@@ -145,7 +145,6 @@ async def create_report(request: Request, name: str, site: int, kpi_names:  Anno
         return ReportResponse(success=False, data=None, message="Error saving PDF to Firebase Storage")
 
     # 6. Save the report to the database
-
     try:
 
         report = await repo.create_report(request, name, site, kpi_names, start_date_obj, end_date_obj, user.uid, pdf_url)

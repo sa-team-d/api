@@ -85,7 +85,7 @@ async def getSiteByIdPopulatedKPI(
         }
     ])
     sites = await cursor.to_list(length=1)
-    if (len(sites) == 0): raise Exception()
+    if (len(sites) == 0): raise Exception("Site not found")
     return SiteOverviewWithKPIs(**sites[0])
 
 async def associateKPItoSite(

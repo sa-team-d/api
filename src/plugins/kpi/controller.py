@@ -94,9 +94,9 @@ async def computeKPIForReport(
         return RowReportResponse(success=False, data=None, message=f"Error computing kpi: {e}")
 
 @router.get("/",status_code=200, response_model=KPIResponse, summary="List kpis")
-async def listKPI(request: Request, user=Depends(verify_firebase_token)):
+async def listKPI(request: Request, site: int, user=Depends(verify_firebase_token)):
     try:
-        all_kpi: List[KPIOverview] = await service.listKPIs(request)
+        all_kpi: List[KPIOverview] = await service.listKPIs(site, request)
         return KPIResponse(success=True, data=all_kpi, message="KPIs listed successfully")
     except Exception as e:
         logger.error(f"Error listing kpis: {e}")
