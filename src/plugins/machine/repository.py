@@ -93,7 +93,7 @@ async def get_by_id(machine_id: str, request: Request | None = None, machines_co
 async def get_by_type(machine_type: str, request: Request | None = None, machines_collection: Collection[MachineDetail] = None):
     machines_collection = get_collection(request, machines_collection, "machines")
 
-    cursor = machines_collection.find({ "type": machine_type })
+    cursor = machines_collection.find({ "category": machine_type })
     machines = [MachineOverview(**machine) async for machine in cursor]
 
     if len(machines) == 0:
@@ -104,7 +104,7 @@ async def get_by_name(machine_name: str, machine_type: Optional[str] = None, req
     machines_collection = get_collection(request, machines_collection, "machines")
 
     if machine_type:
-        cursor = machines_collection.find({ "name": machine_name, "type": machine_type })
+        cursor = machines_collection.find({ "name": machine_name, "category": machine_type })
     else:
         cursor = machines_collection.find({ "name": machine_name })
     machines = [MachineOverview(**machine) async for machine in cursor]
@@ -118,4 +118,4 @@ async def removeKPIfromMachines(_id: ObjectId, request: Request | None = None, m
     machines_collection = get_collection(request, machines_collection, "machines")
     result = await machines_collection.update_many({}, { "$pull": { "kpis_ids": _id } })
 
-    return result.modified_count 
+    return result.modified_count
