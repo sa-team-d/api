@@ -124,9 +124,6 @@ async def computeKPIByMachine(
     if not checkValidOps(granularity_op):
         raise Exception('Not valid op')
     res = await repository.computeKPIByMachine(machine_id, kpi_id, start_date, end_date, granularity_days, granularity_op, request=request)
-    for v in res:
-        if math.isnan(v.value):
-            raise Exception('Computed value is not valid for this kpi: ', kpi_id)
     if len(res) == 0:
         raise Exception('There are not data for this kpi: ', kpi_id)
     return res

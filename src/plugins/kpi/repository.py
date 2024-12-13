@@ -10,6 +10,7 @@ from pymongo.collection import Collection
 
 from fastapi import Request
 from bson import ObjectId
+import math
 
 async def computeKPIByMachine(
     machine_id, 
@@ -102,8 +103,8 @@ async def computeCompositeKPIByMachine(
             symbol_dict[k] = v[k][index].value
         parsed_expression = sympify(formula)
         result = parsed_expression.subs(symbol_dict)
-        if result == zoo:
-            raise Exception('invalid math operation')
+        if result == zoo or result == None or math.isnan(result):
+            result = 0 #raise Exception('invalid math operation')
         results.append(ComputedValue(value=result))
     return results
 
