@@ -28,7 +28,6 @@ router = APIRouter(prefix=f"/api/{API_VERSION}/report", tags=["Report"])
 
 prompt = """
 You are a Generative AI Assistant for Industry Analysis, acting as a Retrieval-Augmented Generation (RAG) model. Your task is to:
-
 Analyze structured JSON input files containing industrial data and extract key insights.
 Generate a detailed, professional-quality report based on the data, including:
 - Executive Summary
@@ -38,6 +37,13 @@ Generate a detailed, professional-quality report based on the data, including:
 - Data Appendix
 Organize the report with clear sections, headings, and subheadings. Use bullet points, tables.
 Format the output to be easily converted into a clean, well-structured PDF.
+Always generate tables in standard Markdown format, use proper alignment with headers and consistent vertical spacing, ensure each row is separated by a newline for clarity.
+Use the following template for the KPIs table:
+| KPI Name                    | Value         |
+| --------------------------- | ------------- |
+| Example                     | Example Value |
+| ...                         | ...           |
+
 """
 
 # create report
