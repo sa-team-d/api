@@ -101,7 +101,10 @@ async def getChatResponse(
                 except Exception as e:
                     print(f"Error creating KPI: {e}")
             created_kpis = ", ".join(created_kpis)
-            return {f'Successfully created KPIs: {created_kpis}'}
+            if len(created_kpis) > 0:
+                return {f'Successfully created KPIs: {created_kpis}'}
+            else:
+                return {'Impossible to create KPIs'}
         else:
             # normal response from chat
             return response
