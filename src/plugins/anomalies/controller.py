@@ -30,7 +30,7 @@ async def getAnomalies(
     """
     Get all anomalies for the specified KPIs.
     Args:
-    - anomaly_type (list[str]): The type of anomaly to get. Default is 'energy'.
+    - anomaly_type (list[str]): The type of anomaly to get. Default is energy, cycle_quality, downtime, cycle_time.
     Returns:
     - AnomalyResponse: Anomaly response object containing total anomalies and anomalies by machine category.
     """

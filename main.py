@@ -1,11 +1,12 @@
 import sys, os
-from fastapi import FastAPI, APIRouter
+from fastapi import Depends, FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from contextlib import asynccontextmanager
 from fastapi.requests import Request
 
 sys.path.append(os.path.abspath("."))
+from src.plugins.auth.firebase import verify_firebase_token
 from src.plugins.machine import controller as machine_controller
 from src.plugins.user import controller as user_controller
 from src.plugins.kpi import controller as kpi_controller
@@ -100,7 +101,7 @@ async def check_mongodb_connection(request: Request):
         # include_in_schema=False
 
     )
-async def list_all_data(request: Request):
+async def list_all_data(request: Request, user=Depends(verify_firebase_token)):
 
     return await request.app.mongodb_obj.list_all_data()
 

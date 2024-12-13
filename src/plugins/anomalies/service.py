@@ -1,3 +1,4 @@
+from collections import defaultdict
 import joblib
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import train_test_split, ParameterGrid
@@ -13,22 +14,21 @@ import os
 CSV_FILE_PATH = os.getenv("CSV_FILE_PATH")
 
 import pandas as pd
-def data_fetch(features):
+def data_fetch(features,):
     """
     Fetches data for the specified KPIs (features) and returns a DataFrame containing
     only the specified features along with 'time' and 'asset_id'.
-
-    Args:
-    features (list): A list of KPIs (features) to fetch.
 
     Returns:
     pd.DataFrame: A DataFrame containing 'time', 'asset_id', and the specified features.
     """
     # Load the data
-    df = pd.read_csv(CSV_FILE_PATH)
-
+    df = pd.read_csv("dataset/smart_app_data.csv")
     # Check if the required columns are present in the dataset
-    required_columns = ['time', 'asset_id', 'kpi', 'sum']
+    if 'average_cycle_time' in features:
+        required_columns= ['time', 'asset_id', 'kpi', 'avg']
+    else :
+        required_columns = ['time', 'asset_id', 'kpi', 'sum']
     if not all(col in df.columns for col in required_columns):
         raise ValueError(f"The dataset must contain the following columns: {required_columns}")
 
@@ -36,20 +36,33 @@ def data_fetch(features):
     filtered_df = df[df['kpi'].isin(features)]
 
     # Pivot the data so that each KPI becomes a column, preserving KPI names
-    pivoted_df = filtered_df.pivot_table(
-        index=['time', 'asset_id'],  # Use 'time' and 'machine_id' as the index
-        columns='kpi',                # Pivot 'kpi' values into columns
-        values='sum',                 # Use 'sum' values as data
-        aggfunc='first'               # Handle duplicates by taking the first value
-    ).reset_index()
+    if 'average_cycle_time' in features:
+            pivoted_df = filtered_df.pivot_table(
+            index=['time', 'asset_id'],  # Use 'time' and 'machine_id' as the index
+            columns='kpi',                # Pivot 'kpi' values into columns
+            values='avg',                 # Use 'sum' values as data
+            aggfunc='first'               # Handle duplicates by taking the first value
+        ).reset_index()
+
+
+    else:
+
+        pivoted_df = filtered_df.pivot_table(
+            index=['time', 'asset_id'],  # Use 'time' and 'machine_id' as the index
+            columns='kpi',                # Pivot 'kpi' values into columns
+            values='sum',                 # Use 'sum' values as data
+            aggfunc='first'               # Handle duplicates by taking the first value
+        ).reset_index()
 
     # Rename columns to preserve KPI names
     pivoted_df.columns.name = None  # Remove the column hierarchy name
     pivoted_df.rename_axis(None, axis=1, inplace=True)
 
-    pivoted_df.fillna(0, inplace=True)
+
+    # pivoted_df.fillna(0, inplace=True)
 
     return pivoted_df
+
 
 import pandas as pd
 import numpy as np
@@ -60,18 +73,16 @@ def preprocessor(df):
     """
     Accepts a DataFrame and returns the preprocessed DataFrame.
 
-    Steps:
-    1. Handle missing data using a Linear Regression model.
+   This function:
+    1. Handles missing data using a Linear Regression model.
     2. Normalize data column-wise (KPI-wise).
     3. Perform consistency checking and remove rows where `min > max`.
+    4. Adds important features
 
     Args:
     df (pd.DataFrame): The input DataFrame with columns ['time', 'asset_id', KPIs...].
-
-    Returns:
-    pd.DataFrame: The preprocessed DataFrame.
     """
-    # Step 1: Handle missing data
+    # Handlling missing data
     def handle_missing_data(df):
         # Ensure the 'time' column is in datetime format
         df['time'] = pd.to_datetime(df['time'])
@@ -82,7 +93,7 @@ def preprocessor(df):
             # Prepare training data for the Linear Regression model
             training_data = df.dropna(subset=[kpi])
             if len(training_data) > 1:  # Ensure there is sufficient data for training
-                # Convert time to numeric (e.g., Unix timestamp)
+                # Convert time to numeric
                 X_train = training_data[['time']].apply(lambda x: x.astype('int64') // 10**9)
                 y_train = training_data[kpi]
 
@@ -102,6 +113,64 @@ def preprocessor(df):
         return df
 
     df = handle_missing_data(df)
+
+    # Normalization of data column-wise (KPI-wise normalization)
+    def normalize_kpi_wise(df):
+        scaler = MinMaxScaler()
+        kpi_columns = [col for col in df.columns if col not in ['time', 'asset_id']]
+        df[kpi_columns] = scaler.fit_transform(df[kpi_columns])
+        # print("Data normalization complete.")
+        return df
+
+    df = normalize_kpi_wise(df)
+
+    # Consistency checking (min > max)
+    def consistency_check(data, min_col='min', max_col='max'):
+        """
+        Checks for consistency in the data where 'min' should not be greater than 'max'.
+        Removes rows where this condition is violated.
+        It accepts:
+        - data (pd.DataFrame): Input DataFrame.
+        - min_col (str): Name of the column representing the minimum value.
+        - max_col (str): Name of the column representing the maximum value.
+
+        It returns:
+        - pd.DataFrame: DataFrame with inconsistent rows removed.
+        """
+    # Filter out rows where min > max
+        consistent_data = data[data[min_col] <= data[max_col]]
+        print(f"Removed {len(data) - len(consistent_data)} inconsistent rows where {min_col} > {max_col}.")
+        return consistent_data
+
+    return df
+
+
+    #Feature addition
+    #
+def feature_engineering(data, value_col, window=7):
+    """
+    Adds time-based features to the dataset, including rolling mean and expanding mean.
+
+    It accepts :
+    - data (pd.DataFrame): Input DataFrame with a time column and a value column.
+    - value_col (str): The column for which features will be calculated.
+    - window (int): The window size for the rolling mean.
+
+    Returns:
+    - pd.DataFrame: DataFrame with new time-based features added.
+    """
+    # Ensure 'time' column is in datetime format and sorted
+    data['time'] = pd.to_datetime(data['time'])
+    data = data.sort_values('time')
+
+    # Calculate 7-day rolling mean
+    data[f'{value_col}_rolling_mean_{window}'] = data[value_col].rolling(window=window).mean()
+
+    # Calculate expanding mean (cumulative mean)
+    data[f'{value_col}_expanding_mean'] = data[value_col].expanding().mean()
+
+    # print(f"Added 7-day rolling mean and expanding mean features for {value_col}.")
+    return data
 
     # Step 2: Normalize data column-wise (KPI-wise normalization)
     def normalize_kpi_wise(df):
@@ -715,3 +784,164 @@ def analyze_cycle_quality_anomalies():
 
     # Return results
     return total_anomalies, anomalies_by_group
+
+def train_cycle_time_anomaly_model(data, output_path="models/cycle_time_anomaly_models/"):
+    """
+    Train ARIMA models for average_cycle_time anomalies for each machine.
+
+    Args:
+    - data (pd.DataFrame): Preprocessed data with columns ['time', 'asset_id', 'average_cycle_time'].
+    - output_path (str): Directory to save ARIMA models for each machine.
+
+    Returns:
+    - None: The models are saved to the specified directory.
+    """
+    os.makedirs(output_path, exist_ok=True)
+
+    for machine in data['asset_id'].unique():
+        machine_data = data[data['asset_id'] == machine].set_index('time')['average_cycle_time']
+        machine_data.sort_index(inplace=True)
+
+        try:
+            # print(f"Training ARIMA model for Machine: {machine}")
+            model = ARIMA(machine_data, order=(7, 1, 1))
+            model_fit = model.fit()
+
+            model_file = os.path.join(output_path, f"{machine}_arima.pkl")
+            joblib.dump(model_fit, model_file)
+            # print(f"Model for Machine {machine} saved at {model_file}")
+        except Exception as e:
+            print(f"Failed to train ARIMA model for Machine {machine}: {e}")
+
+
+
+def detect_cycle_time_anomalies(data, model_folder="models/cycle_time_anomaly_models/"):
+    """
+    Detect anomalies in average_cycle_time using trained ARIMA models.
+
+    Args:
+    - data (pd.DataFrame): Preprocessed data with columns ['time', 'asset_id', 'average_cycle_time'].
+    - model_folder (str): Directory where ARIMA models are saved.
+
+    Returns:
+    - pd.DataFrame: A summary of anomalies with machine names, timestamps, and cycle times.
+    """
+    anomalies_summary = pd.DataFrame()
+
+    for machine in data['asset_id'].unique():
+        machine_data = data[data['asset_id'] == machine].set_index('time')['average_cycle_time']
+        machine_data.sort_index(inplace=True)
+
+        model_file = os.path.join(model_folder, f"{machine}_arima.pkl")
+        if not os.path.exists(model_file):
+            # print(f"Model for Machine {machine} not found. Skipping...")
+            continue
+
+        model_fit = joblib.load(model_file)
+        residuals = machine_data - model_fit.fittedvalues
+        threshold = 6 * residuals.std()
+        anomalies = residuals[residuals > threshold]
+
+        if not anomalies.empty:
+            anomalies_df = pd.DataFrame({
+                'Date': anomalies.index,
+                'Average Cycle Time': machine_data.loc[anomalies.index],
+                'Machine': machine
+            })
+            anomalies_summary = pd.concat([anomalies_summary, anomalies_df], ignore_index=True)
+
+    return anomalies_summary
+
+
+def Efficiency_Anomaly_Analysis(
+    data_fetch, preprocessor, detect_drift, feature_engineering, retrain_function,
+    machine_id_mapping, kpi_name='average_cycle_time',
+    model_folder="models/cycle_time_anomaly_models/", drift_threshold=0.05
+):
+    """
+    Perform Efficiency Anomaly Analysis using ARIMA models for average_cycle_time.
+
+    Args:
+    - data_fetch (function): Function to fetch the data.
+    - preprocessor (function): Function to preprocess the data.
+    - detect_drift (function): Function to check for drift in the data.
+    - feature_engineering (function): Function to add engineered features.
+    - retrain_function (function): Function to retrain models if drift is detected.
+    - machine_id_mapping (dict): Mapping of machine groups and their corresponding asset IDs.
+    - kpi_name (str): The name of the KPI to analyze.
+    - model_folder (str): Directory where ARIMA models are saved.
+    - drift_threshold (float): P-value threshold for drift detection.
+    - last_week_date (pd.Timestamp): End date for the last week period to analyze anomalies.
+
+    Returns:
+    - int: Total number of anomalies in the last week.
+    - dict: Number of anomalies per machine group.
+    """
+    # Step 1: Fetch and preprocess data
+    data = data_fetch([kpi_name])
+    data = preprocessor(data)
+
+    # Step 2: Apply feature engineering
+    data = feature_engineering(data, value_col=kpi_name, window=7)
+    #current_date_ = pd.Timestamp('2024-10-09 00:00:00').tz_localize('UTC')
+
+    last_week_date= pd.Timestamp('2024-10-09 00:00:00').tz_localize('UTC')
+    # Step 3: Check for drift and retrain models if necessary
+    drift_detected = detect_drift(data, [kpi_name], last_week_date, threshold=drift_threshold)
+    if drift_detected:
+        # print(f"Drift detected in {kpi_name}. Retraining models...")
+        retrain_function(data, output_path=model_folder)
+    else:
+        # print(f"No drift detected in {kpi_name}. Using existing models.")
+        pass
+
+    # Step 4: Detect anomalies
+    anomalies_summary = detect_cycle_time_anomalies(data, model_folder)
+
+    # Step 5: Filter anomalies for the last week
+    if not last_week_date:
+        last_week_date =  pd.Timestamp('2024-10-09 00:00:00').tz_localize('UTC')  # Example current date
+    start_last_week = last_week_date - timedelta(days=7)
+    anomalies_summary['Date'] = pd.to_datetime(anomalies_summary['Date'])
+    last_week_anomalies = anomalies_summary[
+        (anomalies_summary['Date'] >= start_last_week) & (anomalies_summary['Date'] < last_week_date)
+    ]
+
+    # Calculate total anomalies
+    total_anomalies = len(last_week_anomalies)
+
+    # Calculate anomalies per machine group
+    anomalies_per_group = defaultdict(int)
+    for machine, group in machine_id_mapping.items():
+        anomalies_count = last_week_anomalies['Machine'].isin(group).sum()
+        anomalies_per_group[machine] += anomalies_count
+
+    return total_anomalies, dict(anomalies_per_group)
+
+def analyze_cycle_time_anomalies():
+
+        machine_id_mapping = {
+            'Metal Cutting Machines': [
+                'ast-yhccl1zjue2t', 'ast-6votor3o4i9l', 'ast-ha448od5d6bd',
+                'ast-5aggxyk5hb36', 'ast-anxkweo01vv2', 'ast-6nv7viesiao7'
+            ],
+            'Laser Welding Machines': ['ast-hnsa8phk2nay', 'ast-206phi0b9v6p'],
+            'Assembly Machines': ['ast-pwpbba0ewprp', 'ast-upqd50xg79ir', 'ast-sfio4727eub0'],
+            'Testing Machines': ['ast-nrd4vl07sffd', 'ast-pu7dfrxjf2ms', 'ast-06kbod797nnp'],
+            'Riveting Machine': ['ast-o8xtn5xa8y87'],
+            'Laser Cutter': ['ast-xpimckaf3dlf']
+        }
+
+        total_anomalies, anomalies_per_group = Efficiency_Anomaly_Analysis(
+            data_fetch=data_fetch,
+            preprocessor=preprocessor,
+            detect_drift=detect_drift,
+            feature_engineering=feature_engineering,
+            retrain_function=train_cycle_time_anomaly_model,
+            machine_id_mapping=machine_id_mapping,
+            kpi_name='average_cycle_time',
+            model_folder="models/cycle_time_anomaly_models/",
+            drift_threshold=0.05
+
+        )
+        return total_anomalies,anomalies_per_group

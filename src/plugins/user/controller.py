@@ -5,7 +5,7 @@ Contains all the routes for user management.
 from fastapi import APIRouter, Depends, Request
 
 
-from src.plugins.auth.firebase import verify_firebase_token_and_role, verify_firebase_token
+from src.plugins.auth.firebase import verify_firebase_token
 from src.plugins.auth.auth_utils import get_uid_and_token
 from .schema import User, UserResponse, UserLogin, UserWithToken
 from . import repository as repo
@@ -40,7 +40,7 @@ async def login(request: Request, credentials: UserLogin):
 
 # Create a new user
 @router.post("/", status_code=201, response_model=User, summary="Create a new user")
-async def create_user(name:str, phone_number:str, email:str, site:str, user = Depends(verify_firebase_token_and_role)):
+async def create_user(name:str, phone_number:str, email:str, site:str, user = Depends(verify_firebase_token)):
     """
     Create a new user.
 
@@ -58,7 +58,7 @@ async def create_user(name:str, phone_number:str, email:str, site:str, user = De
 
 # delete a user
 @router.delete("/{user_id}", status_code=204, summary="Delete a user")
-async def delete_user(user_id: str, user = Depends(verify_firebase_token_and_role)):
+async def delete_user(user_id: str, user = Depends(verify_firebase_token)):
     """
     Delete a user.
 
@@ -73,7 +73,7 @@ async def delete_user(user_id: str, user = Depends(verify_firebase_token_and_rol
 
 # update user info
 @router.put("/{user_id}", status_code=200, response_model=User, summary="Update user info")
-async def update_user(user_id: str, name:str, phone_number:str, email:str, site:str, user = Depends(verify_firebase_token_and_role)):
+async def update_user(user_id: str, name:str, phone_number:str, email:str, site:str, user = Depends(verify_firebase_token)):
     """
     Update user info.
 
