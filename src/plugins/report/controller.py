@@ -9,7 +9,7 @@ from sympy import Union, content
 from src.plugins.auth.firebase import verify_firebase_token_and_role, verify_firebase_token
 from src.plugins.user.schema import User
 
-from .schema import Report, ReportResponse
+from .schema import CreateReportBody, Report, ReportResponse
 from . import repository as repo
 from openai import OpenAI
 from src.plugins.kpi import service as kpi_service
@@ -51,7 +51,7 @@ Use the following template for the KPIs table:
 
 # create report
 @router.post("/", status_code=201, summary="Create a new report, save it to the database and return the PDF URL to download it")
-async def create_report(request: Request, name: str, site: int, kpi_names:  Annotated[list[str] | None, Query()] = None, start_date:str = "2024-09-30 00:00:00", end_date:str = "2024-10-14 00:00:00", operation: str='avg', user: User = Depends(verify_firebase_token)):
+async def create_report(request: Request, item:CreateReportBody, user: User = Depends(verify_firebase_token)):
 
     """
     Create a new report, save it to the database and return the PDF URL to download it
@@ -69,29 +69,29 @@ async def create_report(request: Request, name: str, site: int, kpi_names:  Anno
     - PDF URL to download the report
     """
     try:
-        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
-        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
+        start_date_obj = datetime.strptime(item.start_date, "%Y-%m-%d %H:%M:%S")
+        end_date_obj = datetime.strptime(item.end_date, "%Y-%m-%d %H:%M:%S")
     except Exception as e:
         return ReportResponse(success=False, data=None, message="Invalid date format. Please use the format 'YYYY-MM-DD HH:MM:SS'")
 
     if start_date_obj > end_date_obj:
         return ReportResponse(success=False, data=None, message="Start date must be before end date")
 
-    if not kpi_names:
+    if not item.kpi_names:
         return ReportResponse(success=False, data=None, message="KPI names must be provided")
 
-    if not site:
+    if not item.site:
         return ReportResponse(success=False, data=None, message="Site must be provided")
 
-    if not name:
+    if not item.name:
         return ReportResponse(success=False, data=None, message="Report name must be provided")
 
-    if not operation:
+    if not item.operation:
         return ReportResponse(success=False, data=None, message="Operation must be provided")
 
     try:
         # check if the report name already exists
-        report = await repo.report_by_name(request, name, user.uid)
+        report = await repo.report_by_name(request, item.name, user.uid)
         if report:
             return ReportResponse(success=False, data=None, message="Report name already exists")
     except Exception as e:
@@ -102,7 +102,7 @@ async def create_report(request: Request, name: str, site: int, kpi_names:  Anno
 
     # 2. Compute the report with the kpi data as input
     try:
-        kb = await kpi_service.computeKPIForReport(request, site, start_date_obj, end_date_obj, None, operation, kpi_names=kpi_names)
+        kb = await kpi_service.computeKPIForReport(request, item.site, start_date_obj, end_date_obj, None, item.operation, kpi_names=item.kpi_names)
         client = OpenAI()
         completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -159,7 +159,7 @@ async def create_report(request: Request, name: str, site: int, kpi_names:  Anno
     # 4. Save locally PDF to test (Optional: Remove in production)
     if debug_mode:
         try:
-            with open(f'reports/{name}.pdf', "wb") as f:
+            with open(f'reports/{item.name}.pdf', "wb") as f:
                 f.write(pdf_output.read())
             pdf_output.seek(0)  # Reset buffer after reading
         except Exception as e:
@@ -167,7 +167,7 @@ async def create_report(request: Request, name: str, site: int, kpi_names:  Anno
     # 5. save pdf on firebase storage
     try:
         bucket = storage.bucket()
-        blob = bucket.blob(f"report/{name}.pdf")
+        blob = bucket.blob(f"report/{item.name}.pdf")
         blob.upload_from_file(pdf_output, content_type="application/pdf")
         blob.make_public()
         pdf_url = blob.public_url
@@ -177,7 +177,7 @@ async def create_report(request: Request, name: str, site: int, kpi_names:  Anno
     # 6. Save the report to the database
     try:
 
-        report = await repo.create_report(request, name, site, kpi_names, start_date_obj, end_date_obj, user.uid, pdf_url)
+        report = await repo.create_report(request, item.name, item.site, item.kpi_names, start_date_obj, end_date_obj, user.uid, pdf_url)
         return ReportResponse(success=True, data=report, message="Report created successfully")
     except Exception as e:
         return ReportResponse(success=False, data=None, message=str(e))
