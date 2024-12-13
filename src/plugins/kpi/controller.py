@@ -123,6 +123,7 @@ async def computeKPIForReport(
     start_date: str,
     end_date: str,
     granularity_op: str,
+    kpi_names: str,
     user=Depends(verify_firebase_token)
 ):
     """
@@ -141,7 +142,7 @@ async def computeKPIForReport(
     try:
         start_date_obj = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S")
         end_date_obj = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
-        res = await service.computeKPIForReport(request, site_id, start_date_obj, end_date_obj, None, granularity_op)
+        res = await service.computeKPIForReport(request, site_id, start_date_obj, end_date_obj, None, granularity_op, kpi_names=kpi_names.split(','))
         return RowReportResponse(success=True, data=res, message="KPI computed successfully")
     except Exception as e:
         logger.error(f"Error computing kpi: {e}")

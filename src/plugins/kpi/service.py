@@ -59,6 +59,7 @@ async def computeKPIForReport(
     end_date,
     granularity_days,
     granularity_op,
+    kpi_names: list[str] = [],
 ):
     site = await siteRepository.getSiteByIdPopulatedKPI(site_id, request=request)
     result = RowReport(
@@ -68,6 +69,8 @@ async def computeKPIForReport(
         kpis=[]
     )
     for kpi in site.kpis:
+        if kpi.name not in kpi_names:
+            continue
         kpi_result = await computeKPIBySite(request, site_id, kpi.id, None, start_date, end_date, granularity_days, granularity_op)
         if len(kpi_result) != 1: raise Exception("No kpi result found")
         result.kpis.append(KPIReport(

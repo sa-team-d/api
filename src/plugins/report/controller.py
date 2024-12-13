@@ -102,7 +102,7 @@ async def create_report(request: Request, name: str, site: int, kpi_names:  Anno
 
     # 2. Compute the report with the kpi data as input
     try:
-        kb = await kpi_service.computeKPIForReport(request, site, start_date_obj, end_date_obj, None, operation)
+        kb = await kpi_service.computeKPIForReport(request, site, start_date_obj, end_date_obj, None, operation, kpi_names=kpi_names)
         client = OpenAI()
         completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
