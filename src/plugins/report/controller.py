@@ -109,6 +109,7 @@ async def create_report(request: Request, item:CreateReportBody, user: User = De
             messages=[
                 {"role": "system", "content": prompt},
                 {"role": "system", "content": f"Consider that you have the following Knowledge Base: {kb}"},
+                {"role": "user", "content": f"The report must be in {item.language} language"},
             ]
         )
         report_content = completion.choices[0].message.content

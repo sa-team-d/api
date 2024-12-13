@@ -61,6 +61,7 @@ class CreateReportBody(BaseModel):
     name: str = Field(..., description="Report name")
     site: int = Field(..., description="Site ID")
     kpi_names: list[str] = Field(..., description="Names of the KPIs being reported")
+    language: str = "italian"
     start_date:str = "2024-09-30 00:00:00"
     end_date:str = "2024-10-14 00:00:00"
     operation: str='avg'
