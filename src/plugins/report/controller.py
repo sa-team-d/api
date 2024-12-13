@@ -1,7 +1,7 @@
 from datetime import datetime
 import io
-from turtle import dot
 from typing import Annotated, Optional, List
+from click import style
 from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from fpdf import FPDF
 from sympy import Union, content
@@ -17,6 +17,9 @@ import markdown
 import pdfkit
 import os
 from firebase_admin import storage
+
+import markdown2
+from weasyprint import CSS, HTML
 
 import dotenv
 dotenv.load_dotenv()
@@ -35,13 +38,13 @@ Generate a detailed, professional-quality report based on the data, including:
 - Trends and Observations
 - Recommendations
 - Data Appendix
-Organize the report with clear sections, headings, and subheadings. Use bullet points, tables.
+Organize the report with clear sections, headings, and subheadings. Use bullet points, tables. Use bold and italic text for key words and highlight important information.
 Format the output to be easily converted into a clean, well-structured PDF.
 Always generate tables in standard Markdown format, use proper alignment with headers and consistent vertical spacing, ensure each row is separated by a newline for clarity.
 Use the following template for the KPIs table:
 | KPI Name                    | Value         |
 | --------------------------- | ------------- |
-| Example                     | Example Value |
+| *Example*                   | Example Value |
 | ...                         | ...           |
 
 """
@@ -115,19 +118,40 @@ async def create_report(request: Request, name: str, site: int, kpi_names:  Anno
     # 3. Convert report content to PDF
     try:
         # Convert Markdown to HTML
-        html_content = markdown.markdown(report_content)
+        html_content = markdown2.markdown(report_content, extras=["tables"])
 
-        # Configure pdfkit options if needed
-        options = {
-            'encoding': "UTF-8",
-            'enable-local-file-access': None
+        # Define custom CSS for the PDF
+        css = """
+        @page {
+            size: A4;
+            margin: 1in;
         }
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12pt;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        strong {
+            font-weight: bold;
+        }
+        em {
+            font-style: italic;
+        }
+        """
 
-        # Convert HTML to PDF
-        pdf_bytes = pdfkit.from_string(html_content, False, options=options)
+        # Convert HTML to PDF using WeasyPrint
+        pdf_output = io.BytesIO()
+        HTML(string=html_content).write_pdf(pdf_output, stylesheets=[CSS(string=css)])
+        pdf_output.seek(0)  # Reset buffer position
 
-        # Create BytesIO object from PDF bytes
-        pdf_output = io.BytesIO(pdf_bytes)
     except Exception as e:
         print(f"Error creating PDF: {e}")
         return ReportResponse(success=False, data=None, message="Error creating PDF")
