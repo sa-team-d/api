@@ -108,6 +108,29 @@ async def computeCompositeKPIByMachine(
         results.append(ComputedValue(value=result))
     return results
 
+mappingOp = {
+    'avg': {
+        'op': 'avg',
+        'data': 'avg'
+    },
+    'sum': {
+        'op': 'sum',
+        'data': 'sum'
+    },
+    'min': {
+        'op': 'min',
+        'data': 'min'
+    },
+    'max': {
+        'op': 'max',
+        'data': 'max'
+    },
+    'std': {
+        'op': 'stdDevPop',
+        'data': 'avg'
+    },
+}
+
 async def computeAtomicKPIByMachine(
     machine_id, 
     kpi_id, 
@@ -167,7 +190,7 @@ async def computeAtomicKPIByMachine(
             "$group": {
                 "_id": "$groupIndex",
                 "value": {
-                    f"${granularity_op}": f"$documents.data.{granularity_op}"
+                    f"${mappingOp[granularity_op]['op']}": f"$documents.data.{mappingOp[granularity_op]['data']}"
                 }
             }
         },

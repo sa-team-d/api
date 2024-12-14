@@ -9,6 +9,7 @@ from src.plugins.user import repository as userRepository
 from src.plugins.machine import repository as machineRepository
 from sympy import sympify
 import math
+import numpy as np
 
 def checkValidOps(op):
     if op == 'sum':
@@ -19,7 +20,9 @@ def checkValidOps(op):
         return True
     if op == 'max':
         return True
-    raise Exception()
+    if op == 'std':
+        return True
+    return False
 
 def applyAggregationOpToMachinesKpi(op, kpi_for_machines):
     if op == 'sum':
@@ -50,7 +53,14 @@ def applyAggregationOpToMachinesKpi(op, kpi_for_machines):
             }
             for elements in zip(*kpi_for_machines)
         ]
-    raise Exception()
+    if op == 'std':
+        return [
+            {
+                "value": float(np.std([d.value for d in elements]))
+            }
+            for elements in zip(*kpi_for_machines)
+        ]
+    raise Exception('Not valid op')
 
 async def computeKPIForReport(
     request: Request,
