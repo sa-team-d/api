@@ -10,9 +10,11 @@ from bson import ObjectId
 from exceptiongroup import catch
 from fastapi import APIRouter, Depends, Request
 from httplib2 import Http
+from httpx import HTTPError
 from sympy import catalan
 from src.plugins.auth.firebase import verify_firebase_token
 from openai import OpenAI
+from src.plugins.chat.schema import Analysis, ChatResponse
 from src.plugins.kpi import service as kpi_service
 from src.plugins.kpi import controller as kpi_controller
 from src.plugins.machine import repository as machine_repository
@@ -183,4 +185,32 @@ async def getChatResponse(
             return response
     except Exception as e:
         print(f"Error getting chat response: {e}")
-        return HTTPResponse(status=500, reason="Error getting chat response")
+        return ChatResponse(success=False, data=None, message=f"Error getting chat response: {str(e)}")
+
+# get analysis results and predictions
+@router.get("/", status_code=200, summary="Get ml analysis results")
+async def getAnalysis(
+    request: Request,
+    user=Depends(verify_firebase_token)
+):
+    """
+    This endpoint is used to get the analysis results from the ml analysis.
+    Returns:
+    - dict: The analysis results
+    """
+    try:
+        for k,v in cost_prediction_for_category.items():
+            cost_prediction_for_category[k] = str(v)
+
+        return ChatResponse(
+            success=True,
+            data=Analysis(
+                cost_prediction = cost_prediction_for_category,
+                utilization = utilization.to_dict(),
+                energy_efficiency = energy_efficiency.to_dict()
+            ),
+            message="Analysis results retrieved successfully")
+        
+    except Exception as e:
+        print(f"Error getting analysis results: {e}")
+        return ChatResponse(success=False, data=None, message=f"Error getting analysis results: {str(e)}")
