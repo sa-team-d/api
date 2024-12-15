@@ -12,7 +12,6 @@ from src.plugins.user import controller as user_controller
 from src.plugins.kpi import controller as kpi_controller
 from src.plugins.site import controller as site_controller
 from src.plugins.report import controller as report_controller
-from src.plugins.chat import controller as chat_controller
 from src.plugins.anomalies import controller as anomalies_controller
 from utils import description
 from src.config.firebase_config import initialize_firebase
@@ -26,8 +25,9 @@ load_dotenv()
 
 logger = logger = logging.getLogger('uvicorn.error')
 
-
 initialize_firebase()
+
+from src.plugins.chat import controller as chat_controller
 
 @asynccontextmanager
 async def startup_shutdown_db(app: FastAPI):
