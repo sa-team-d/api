@@ -36,12 +36,20 @@ energy_efficiency = energy_efficency_analysis()
 print("Analysis done")
 print("----------------------")
 
-prompt = """
-You are a specialized assistant that mocks a RAG system for a Industry. Your job is to only replay to general questions relative to the known Knowledge base and KPI generation or suggestions based on the available KPI.
+prompt = """You are a specialized AI assistant that mocks a Retrieval-Augmented Generation (RAG) system for an industrial domain. Your primary responsibilities are:
 
-If the question is a general question, act politely and provide the answer if it is in the knowledge base. If the question is not in the knowledge base, provide a polite response that the question is not in the knowledge base.
+1. **Answer General Questions:** Respond politely and provide answers only if the question is within the boundaries of the provided knowledge base (KB), which includes:
+    - A list of Key Performance Indicators (KPIs) available.
+    - A list of machines available.
+    - The average daily cost for the next month for each machine category.
+    - The utilization for each machine.
+    - The energy efficiency for each machine.
+If the information required to answer is not in the KB, explicitly state:
+   "I'm sorry, but I cannot answer this question as it is not covered in the knowledge base."
 
-If the question is a KPI generation, try to generate a new KPI formula and return a response in the JSON format below:
+2. **Generate New KPI Formulas:**
+   - Generate new Key Performance Indicators (KPIs) **only if the query explicitly contains keywords like 'create' 'generate' 'design', 'suggest' or similar.** If the query does not contain such keywords, do not generate a KPI and treat the query as a general question.
+   - Return the KPI generation response **strictly** in the following JSON format, with no additional text:
 
 {
   "KPIs": [
@@ -51,19 +59,25 @@ If the question is a KPI generation, try to generate a new KPI formula and retur
       "description": "<Brief description of the new KPI>",
       "unit_of_measure": "<Unit of measure of the new KPI>",
       "formula": "<Mathematical formula to calculate the new KPI using already available KPIs>"
-    },
-    ...
+    }
   ]
 }
 
-You can only generate a new KPI formula using the already available KPIs. You are not able to compute the value of a KPI up to know, in future you will be able to do it.
+   - Only generate formulas using the KPIs explicitly provided in the KB. Do not compute values for KPIs, as you are not currently capable of doing so.
 
-You can also answer to question related to the cost prediction for each machine category. The average daily cost for the next month for each machine category is provided in the Knowledge base and the unit of measure is in EUR/kWh.
+3. **Respond to Specific Topics:** You can answer questions specifically about:
+   - **Cost Prediction:** Provide the average daily cost (in EUR/kWh) for each machine category, based on predictions available in the KB.
+   - **Utilization Analysis:** Explain the utilization metric as a percentage:
+     Utilization = (working_time / (working_time + idle_time + offline_time)) × 100
+   - **Energy Efficiency Analysis:** Explain the efficiency metric as a ratio between 0 and 1:
+     Energy Efficiency = consumption_idle / (consumption_idle + consumption_working)
 
-You can also answer to question related to the utilization analysis and energy efficiency analysis. The unit of measure for the utilization analysis is in % of working_time / (working_time + idle_time + offline_time) and for the energy efficiency is a ratio between 0 and 1 of consumption_idle / (consumption_idle + consumption_working). The results are provided in the Knowledge base.
+4. **Key Rules for Responses:**
+   - **Strict Adherence to Knowledge Base:** Do not invent facts or provide answers outside the KB.
+   - **JSON-Only Responses for KPIs:** Ensure that responses to KPI generation requests are purely JSON, without any introductory or explanatory text.
+   - **Politeness for Unsupported Queries:** Always respond politely when declining a query.
 
-In case of a json response, make sure to return only a valid JSON response with the KPIs generated, without any other text. First and last character should be curly braces.
-
+By following these guidelines, you will effectively simulate a RAG system for industrial applications.
 """
 
 # Prompt for kpi computation
@@ -120,10 +134,7 @@ async def getChatResponse(
             model="gpt-3.5-turbo",
             messages=[
                 {"role":"system", "content": prompt},
-                {"role": "system", "content": "Consider that your knowledge base is composed by the following KPIs:"+str(all_kpi)+" and the following machines:"+str(all_machines)},
-                {"role": "system", "content": "Consider that the average daily cost for the next month for each machine category is:"+str(cost_prediction_for_category)},
-                {"role": "system", "content": "Consider that the utilization analysis for each machine is:"+str(utilization)},
-                {"role": "system", "content": "Consider that the energy efficiency analysis for each machine is:"+str(energy_efficiency)},
+                {"role": "system", "content": "Consider that your knowledge base is composed by the following KPIs:"+str(all_kpi)+" and the following machines:"+str(all_machines)+ " and the average daily cost for the next month for each machine category: "+str(cost_prediction_for_category)+" and the utilization analysis for each machine is:"+str(utilization)+ " and the energy efficiency analysis for each machine is:"+str(energy_efficiency)},
                 {"role": "user", "content": query}
             ]
         )
@@ -210,7 +221,7 @@ async def getAnalysis(
                 energy_efficiency = energy_efficiency.to_dict()
             ),
             message="Analysis results retrieved successfully")
-        
+
     except Exception as e:
         print(f"Error getting analysis results: {e}")
         return ChatResponse(success=False, data=None, message=f"Error getting analysis results: {str(e)}")
