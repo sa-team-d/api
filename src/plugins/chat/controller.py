@@ -1,14 +1,19 @@
 import json
 import os
 import logging
+
 from typing import List, Optional, Dict
+
 from fastapi import APIRouter, Depends, Request
+
 from openai import OpenAI
+
 from src.plugins.auth.firebase import verify_firebase_token
 from src.plugins.chat.schema import Analysis, ChatResponse
 from src.plugins.kpi import service as kpi_service
 from src.plugins.machine import repository as machine_repository
 from src.plugins.kpi.schema import KPIOverview
+
 from .service import cost_prediction, utilization_analysis, energy_efficency_analysis
 
 # Run the cost prediction, utilization, and energy efficiency analysis
