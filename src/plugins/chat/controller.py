@@ -59,7 +59,7 @@ async def fetch_analysis(query: str):
     """Fetch only the necessary analysis data based on the query."""
     cost_terms = {"cost prediction", "previsione dei costi"}
     utilization_terms = {"utilization", "utilizzo"}
-    energy_efficiency_terms = {"energy efficiency of", "efficienza energetica della", "efficienza energetica dell'", "efficienza energetica di", "efficienza energetica delle"}
+    energy_efficiency_terms = {"energy efficiency", "efficienza energetica"}
 
     query_lower = query.lower()  # Convert once for efficiency
 
