@@ -70,7 +70,7 @@ def load_json_data(file_path: str) -> Optional[Dict]:
 async def fetch_analysis(query: str):
     """Fetch only the necessary analysis data based on the query."""
     cost_terms = {"cost prediction", "previsione dei costi"}
-    utilization_terms = {"utilization", "utilisation", "utilizzo"}
+    utilization_terms = {"utilization", "utilisation", "usage", "utilizzo"}
     energy_efficiency_terms = {"energy efficiency", "efficienza energetica"}
 
     query_lower = query.lower()  # Convert once for efficiency
