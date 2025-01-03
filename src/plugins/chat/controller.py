@@ -16,18 +16,6 @@ from src.plugins.kpi.schema import KPIOverview
 
 from .service import cost_prediction, utilization_analysis, energy_efficency_analysis
 
-# Run the cost prediction, utilization, and energy efficiency analysis
-print("Starting the ML analysis...")
-print("Running cost prediction...")
-cost_prediction_for_category, pdf_path = cost_prediction()
-print("Cost prediction done")
-print("----------------------")
-print("Run utilization and energy efficiency analysis...")
-utilization = utilization_analysis()
-energy_efficiency = energy_efficency_analysis()
-print("Analysis done")
-print("----------------------")
-
 # Prompts
 CHAT_PROMPT = """You are a specialized AI assistant designed to simulate a Retrieval-Augmented Generation (RAG) system for an industrial domain. 
 Your task is to answer general questions related to the knowledge base. 
@@ -62,10 +50,36 @@ chat_memory: Dict[str, List[Dict[str, str]]] = {}
 
 def analyze_query(query: str) -> str:
     """Analyze the query to determine if it's for chat or KPI generation."""
-    kpi_keywords = ["create", "generate", "design", "new kpi", "new kpis", "crea", "genera", "nuovo kpi", "nuovi kpi"]
+    kpi_keywords = ["create", "generate", "design", "new kpi", "new kpis", "crea", "creare", "genera", "generare", "nuovo kpi", "nuovi kpi"]
     if any(keyword in query.lower() for keyword in kpi_keywords):
         return KPI_PROMPT
     return CHAT_PROMPT
+
+async def fetch_analysis(query: str):
+    """Fetch only the necessary analysis data based on the query."""
+    cost_terms = {"cost prediction", "previsione dei costi"}
+    utilization_terms = {"utilization", "utilizzo"}
+    energy_efficiency_terms = {"energy efficiency of", "efficienza energetica della", "efficienza energetica dell'", "efficienza energetica di", "efficienza energetica delle"}
+
+    query_lower = query.lower()  # Convert once for efficiency
+
+    cost_data = None
+    utilization_data = None
+    energy_efficiency_data = None
+
+    if any(term in query_lower for term in cost_terms):
+        logger.info("Fetching cost prediction data...")
+        cost_data, _ = cost_prediction()
+    
+    if any(term in query_lower for term in utilization_terms):
+        logger.info("Fetching utilization data...")
+        utilization_data = utilization_analysis()
+    
+    if any(term in query_lower for term in energy_efficiency_terms):
+        logger.info("Fetching energy efficiency data...")
+        energy_efficiency_data = energy_efficency_analysis()
+
+    return cost_data, utilization_data, energy_efficiency_data
 
 @router.post("/", status_code=200, summary="Get chat response")
 async def getChatResponse(
@@ -98,14 +112,26 @@ async def getChatResponse(
     all_machines = await machine_repository.get_all(request)
     all_machines = [(machine.name, machine.category) for machine in all_machines]
 
-    # Include the fetched kb and the chat history in the prompt
+    # Fetch analysis data dynamically
+    cost_prediction_for_category, utilization, energy_efficiency = await fetch_analysis(query)
+
+    # Dynamically include the fetched kb and the chat history in the prompt
     messages = [
         {"role": "system", "content": prompt}
     ] + [
-        {"role": "system", "content": "The available machines are:"+str(all_machines)+", and the KPIs associated with each machine are:"+str(all_kpi)+". The average daily cost for the next month for each machine category is: "+str(cost_prediction_for_category)+", the utilization analysis for each machine is:"+str(utilization)+", and the energy efficiency analysis for each machine is:"+str(energy_efficiency)}
-    ] + chat_memory[session_id] + [
-        {"role": "user", "content": query}
+        {"role": "system", "content": f"The company operates a single site with 16 separate machines, each classified into specific types. In particular, there are: 6 metal cutters, 1 riveter, 1 laser cutter, 3 assemblers, 2 welding machines, and 3 testing machines. The available machines are: {all_machines}, and the KPIs associated with each machine are: {all_kpi}."}
     ]
+    
+    if cost_prediction_for_category:
+        messages.append({"role": "system", "content": f"The average daily cost for the next month for each machine category is: {cost_prediction_for_category}."})
+    
+    if utilization:
+        messages.append({"role": "system", "content": f"The utilization analysis for each machine is: {utilization}."})
+    
+    if energy_efficiency:
+        messages.append({"role": "system", "content": f"The energy efficiency analysis for each machine is: {energy_efficiency}."})
+
+    messages += chat_memory[session_id] + [{"role": "user", "content": query}]
 
     try:
         client = OpenAI()
@@ -140,6 +166,7 @@ async def getChatResponse(
                     print(f"Error creating KPI: {e}")
             created_kpis = ", ".join(created_kpis)
             return {f'Successfully created KPIs: {created_kpis}'} if created_kpis else {'Impossible to create KPIs'}
+        
         # Use case as a chatbot
         return response
 
@@ -147,16 +174,16 @@ async def getChatResponse(
         print(f"Error getting chat response: {e}")
         return ChatResponse(success=False, data=None, message=f"Error getting chat response: {str(e)}")
 
-@router.get("/", status_code=200, summary="Get ML analysis results")
+"""@router.get("/", status_code=200, summary="Get ML analysis results")
 async def getAnalysis(
     request: Request,
     user=Depends(verify_firebase_token)
 ):
-    """
+    """"""
     This endpoint is used to get the analysis results from the ML analysis.
     Returns:
     - dict: The analysis results
-    """
+    """"""
     try:
         for k, v in cost_prediction_for_category.items():
             cost_prediction_for_category[k] = str(v)
@@ -172,7 +199,7 @@ async def getAnalysis(
 
     except Exception as e:
         print(f"Error getting analysis results: {e}")
-        return ChatResponse(success=False, data=None, message=f"Error getting analysis results: {str(e)}")
+        return ChatResponse(success=False, data=None, message=f"Error getting analysis results: {str(e)}")"""
 
 @router.post("/reset", status_code=200, summary="Reset chat memory")
 async def resetChatMemory(
