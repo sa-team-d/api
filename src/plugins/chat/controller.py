@@ -73,11 +73,11 @@ async def fetch_analysis(query: str):
     
     if any(term in query_lower for term in utilization_terms):
         logger.info("Fetching utilization data...")
-        utilization_data = utilization_analysis()
+        utilization_data, _ = utilization_analysis()
     
     if any(term in query_lower for term in energy_efficiency_terms):
         logger.info("Fetching energy efficiency data...")
-        energy_efficiency_data = energy_efficency_analysis()
+        energy_efficiency_data, _ = energy_efficency_analysis()
 
     return cost_data, utilization_data, energy_efficiency_data
 
