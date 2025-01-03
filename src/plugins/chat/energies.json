@@ -1,0 +1,23 @@
+{
+  "description": "Energy efficiency of machines in the factory",
+  "content": {
+    "energy_efficiency": {
+      "Testing Machine 3": 0.0,
+      "Testing Machine 2": 0.003305897555474169,
+      "Laser Cutter": 0.025994032221087916,
+      "Low Capacity Cutting Machine 1": 0.02831853305591658,
+      "Assembly Machine 2": 0.07108557042553068,
+      "Assembly Machine 3": 0.08959678406509398,
+      "Laser Welding Machine 1": 0.13044239797815696,
+      "Medium Capacity Cutting Machine 3": 0.17869265637561005,
+      "Testing Machine 1": 0.18376660997739142,
+      "Assembly Machine 1": 0.18989313186292664,
+      "Laser Welding Machine 2": 0.20274847160138532,
+      "Large Capacity Cutting Machine 1": 0.22245912392915823,
+      "Riveting Machine": 0.3245563678129189,
+      "Medium Capacity Cutting Machine 2": 0.3723443960181457,
+      "Large Capacity Cutting Machine 2": 0.382136653658655,
+      "Medium Capacity Cutting Machine 1": 0.3917457036691058
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "description": "Utilization of machines in the factory",
+  "content": {
+    "utilization": {
+      "Assembly Machine 1": 0.7296168144672052,
+      "Laser Cutter": 0.7133254505802838,
+      "Assembly Machine 2": 0.6512304181921241,
+      "Laser Welding Machine 1": 0.6318166296651799,
+      "Low Capacity Cutting Machine 1": 0.5309211020844607,
+      "Riveting Machine": 0.5239875385630702,
+      "Testing Machine 3": 0.5130672106001118,
+      "Testing Machine 2": 0.3916499889917053,
+      "Assembly Machine 3": 0.34396030393639204,
+      "Laser Welding Machine 2": 0.3254009269969588,
+      "Large Capacity Cutting Machine 2": 0.29546711720282665,
+      "Large Capacity Cutting Machine 1": 0.21444010156644838,
+      "Medium Capacity Cutting Machine 1": 0.20976462895643624,
+      "Medium Capacity Cutting Machine 2": 0.07068717738062205,
+      "Medium Capacity Cutting Machine 3": 0.058858120003513856,
+      "Testing Machine 1": 0.002657429652367055
+    }
+  }
+}

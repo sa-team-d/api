@@ -14,7 +14,10 @@ from src.plugins.kpi import service as kpi_service
 from src.plugins.machine import repository as machine_repository
 from src.plugins.kpi.schema import KPIOverview
 
-from .service import cost_prediction, utilization_analysis, energy_efficency_analysis
+#from .service import cost_prediction, utilization_analysis, energy_efficency_analysis
+COST_PREDICTION_FILE = "src/plugins/chat/costs.json"
+UTILIZATION_FILE = "src/plugins/chat/utilizations.json"
+ENERGY_EFFICIENCY_FILE = "src/plugins/chat/energies.json"
 
 # Prompts
 CHAT_PROMPT = """You are a specialized AI assistant designed to simulate a Retrieval-Augmented Generation (RAG) system for an industrial domain. 
@@ -55,10 +58,19 @@ def analyze_query(query: str) -> str:
         return KPI_PROMPT
     return CHAT_PROMPT
 
+def load_json_data(file_path: str) -> Optional[Dict]:
+    """Load data from a JSON file."""
+    try:
+        with open(file_path, "r") as file:
+            return json.load(file)
+    except Exception as e:
+        logger.error(f"Error loading JSON file {file_path}: {e}")
+        return None
+
 async def fetch_analysis(query: str):
     """Fetch only the necessary analysis data based on the query."""
     cost_terms = {"cost prediction", "previsione dei costi"}
-    utilization_terms = {"utilization", "utilizzo"}
+    utilization_terms = {"utilization", "utilisation", "utilizzo"}
     energy_efficiency_terms = {"energy efficiency", "efficienza energetica"}
 
     query_lower = query.lower()  # Convert once for efficiency
@@ -69,15 +81,15 @@ async def fetch_analysis(query: str):
 
     if any(term in query_lower for term in cost_terms):
         logger.info("Fetching cost prediction data...")
-        cost_data, _ = cost_prediction()
+        cost_data, _ = load_json_data(COST_PREDICTION_FILE)
     
     if any(term in query_lower for term in utilization_terms):
         logger.info("Fetching utilization data...")
-        utilization_data, _ = utilization_analysis()
+        utilization_data, _ = load_json_data(UTILIZATION_FILE)
     
     if any(term in query_lower for term in energy_efficiency_terms):
         logger.info("Fetching energy efficiency data...")
-        energy_efficiency_data, _ = energy_efficency_analysis()
+        energy_efficiency_data, _ = load_json_data(ENERGY_EFFICIENCY_FILE)
 
     return cost_data, utilization_data, energy_efficiency_data
 

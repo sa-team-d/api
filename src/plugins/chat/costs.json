@@ -1,0 +1,13 @@
+{
+  "description": "Cost predictions for machine categories",
+  "content": {
+    "cost_prediction": {
+      "Testing Machines": 0.010329395319865256,
+      "Metal Cutting Machines": 0.04637815462858034,
+      "Laser Cutter": 0.0005160956082603602,
+      "Assembly Machines": 0.007193601533433455,
+      "Riveting Machine": 0.009630899430778293,
+      "Laser Welding Machines": 0.023551859302206688
+    }
+  }
+}
