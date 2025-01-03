@@ -15,9 +15,50 @@ from src.plugins.machine import repository as machine_repository
 from src.plugins.kpi.schema import KPIOverview
 
 #from .service import cost_prediction, utilization_analysis, energy_efficency_analysis
-COST_PREDICTION_FILE = "src/plugins/chat/costs.json"
-UTILIZATION_FILE = "src/plugins/chat/utilizations.json"
-ENERGY_EFFICIENCY_FILE = "src/plugins/chat/energies.json"
+COST_PREDICTION_DATA = {
+      "Testing Machines": 0.010329395319865256,
+      "Metal Cutting Machines": 0.04637815462858034,
+      "Laser Cutter": 0.0005160956082603602,
+      "Assembly Machines": 0.007193601533433455,
+      "Riveting Machine": 0.009630899430778293,
+      "Laser Welding Machines": 0.023551859302206688
+}
+UTILIZATION_DATA = {
+      "Assembly Machine 1": 0.7296168144672052,
+      "Laser Cutter": 0.7133254505802838,
+      "Assembly Machine 2": 0.6512304181921241,
+      "Laser Welding Machine 1": 0.6318166296651799,
+      "Low Capacity Cutting Machine 1": 0.5309211020844607,
+      "Riveting Machine": 0.5239875385630702,
+      "Testing Machine 3": 0.5130672106001118,
+      "Testing Machine 2": 0.3916499889917053,
+      "Assembly Machine 3": 0.34396030393639204,
+      "Laser Welding Machine 2": 0.3254009269969588,
+      "Large Capacity Cutting Machine 2": 0.29546711720282665,
+      "Large Capacity Cutting Machine 1": 0.21444010156644838,
+      "Medium Capacity Cutting Machine 1": 0.20976462895643624,
+      "Medium Capacity Cutting Machine 2": 0.07068717738062205,
+      "Medium Capacity Cutting Machine 3": 0.058858120003513856,
+      "Testing Machine 1": 0.002657429652367055
+}
+ENERGY_EFFICIENCY_DATA = {
+      "Testing Machine 3": 0.0,
+      "Testing Machine 2": 0.003305897555474169,
+      "Laser Cutter": 0.025994032221087916,
+      "Low Capacity Cutting Machine 1": 0.02831853305591658,
+      "Assembly Machine 2": 0.07108557042553068,
+      "Assembly Machine 3": 0.08959678406509398,
+      "Laser Welding Machine 1": 0.13044239797815696,
+      "Medium Capacity Cutting Machine 3": 0.17869265637561005,
+      "Testing Machine 1": 0.18376660997739142,
+      "Assembly Machine 1": 0.18989313186292664,
+      "Laser Welding Machine 2": 0.20274847160138532,
+      "Large Capacity Cutting Machine 1": 0.22245912392915823,
+      "Riveting Machine": 0.3245563678129189,
+      "Medium Capacity Cutting Machine 2": 0.3723443960181457,
+      "Large Capacity Cutting Machine 2": 0.382136653658655,
+      "Medium Capacity Cutting Machine 1": 0.3917457036691058
+}
 
 # Prompts
 CHAT_PROMPT = """You are a specialized AI assistant designed to simulate a Retrieval-Augmented Generation (RAG) system for an industrial domain. 
@@ -58,15 +99,6 @@ def analyze_query(query: str) -> str:
         return KPI_PROMPT
     return CHAT_PROMPT
 
-def load_json_data(file_path: str) -> Optional[Dict]:
-    """Load data from a JSON file."""
-    try:
-        with open(file_path, "r") as file:
-            return json.load(file)
-    except Exception as e:
-        logger.error(f"Error loading JSON file {file_path}: {e}")
-        return None
-
 async def fetch_analysis(query: str):
     """Fetch only the necessary analysis data based on the query."""
     cost_terms = {"cost prediction", "previsione dei costi"}
@@ -81,15 +113,15 @@ async def fetch_analysis(query: str):
 
     if any(term in query_lower for term in cost_terms):
         logger.info("Fetching cost prediction data...")
-        cost_data, _ = load_json_data(COST_PREDICTION_FILE)
+        cost_data = COST_PREDICTION_DATA
     
     if any(term in query_lower for term in utilization_terms):
         logger.info("Fetching utilization data...")
-        utilization_data, _ = load_json_data(UTILIZATION_FILE)
+        utilization_data = UTILIZATION_DATA
     
     if any(term in query_lower for term in energy_efficiency_terms):
         logger.info("Fetching energy efficiency data...")
-        energy_efficiency_data, _ = load_json_data(ENERGY_EFFICIENCY_FILE)
+        energy_efficiency_data = ENERGY_EFFICIENCY_DATA
 
     return cost_data, utilization_data, energy_efficiency_data
 
