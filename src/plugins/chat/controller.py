@@ -156,8 +156,19 @@ async def getChatResponse(
     all_machines = await machine_repository.get_all(request)
     all_machines = [(machine.name, machine.category) for machine in all_machines]
 
-    # Fetch analysis data dynamically
-    cost_prediction_for_category, utilization, energy_efficiency = await fetch_analysis(query)
+    # Check if the data is already in session memory and use it if present
+    cost_prediction_for_category = chat_memory[session_id].get("cost_prediction_for_category", None)
+    utilization = chat_memory[session_id].get("utilization", None)
+    energy_efficiency = chat_memory[session_id].get("energy_efficiency", None)
+
+    if not cost_prediction_for_category or not utilization or not energy_efficiency:
+        # Fetch analysis data dynamically if not in memory
+        cost_prediction_for_category, utilization, energy_efficiency = await fetch_analysis(query)
+
+        # Store the fetched data in the session memory to avoid refetching in future queries
+        chat_memory[session_id]["cost_prediction_for_category"] = cost_prediction_for_category
+        chat_memory[session_id]["utilization"] = utilization
+        chat_memory[session_id]["energy_efficiency"] = energy_efficiency
 
     # Dynamically include the fetched kb and the chat history in the prompt
     messages = [
