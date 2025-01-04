@@ -90,7 +90,7 @@ DEBUG = os.getenv("DEBUG")
 router = APIRouter(prefix=f"/api/{API_VERSION}/chat", tags=["Chat"])
 
 # Chat memory
-chat_memory: Dict[str, List[Dict[str, str]]] = {}
+chat_memory: Dict[str, Dict[str, any]] = {}
 
 def analyze_query(query: str) -> str:
     """Analyze the query to determine if it's for chat or KPI generation."""
@@ -146,7 +146,7 @@ async def getChatResponse(
 
     # Initialize memory if not present
     if session_id not in chat_memory:
-        chat_memory[session_id] = []
+        chat_memory[session_id] = {"past_interactions": []}
 
     # Get the prompt based on the query intent (chat / KPI generation)
     prompt = analyze_query(query)
@@ -186,7 +186,7 @@ async def getChatResponse(
     if energy_efficiency:
         messages.append({"role": "system", "content": f"The energy efficiency analysis for each machine is: {energy_efficiency}."})
 
-    messages += chat_memory[session_id] + [{"role": "user", "content": query}]
+    messages += chat_memory[session_id]["past_interactions"] + [{"role": "user", "content": query}]
 
     try:
         client = OpenAI()
@@ -197,8 +197,8 @@ async def getChatResponse(
         response = completion.choices[0].message.content
 
         # Update chat memory
-        chat_memory[session_id].append({"role": "user", "content": query})
-        chat_memory[session_id].append({"role": "assistant", "content": response})
+        chat_memory[session_id]["past_interactions"].append({"role": "user", "content": query})
+        chat_memory[session_id]["past_interactions"].append({"role": "assistant", "content": response})
 
         if response.startswith("{") and response.endswith("}"):
             # JSON response in case of KPI generation
