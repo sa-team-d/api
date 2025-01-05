@@ -146,7 +146,10 @@ async def getChatResponse(
 
     # Initialize memory if not present
     if session_id not in chat_memory:
-        chat_memory[session_id] = {"past_interactions": []}
+        chat_memory[session_id] = {
+            "past_interactions": [],
+            "context": {}
+        }
 
     # Get the prompt based on the query intent (chat / KPI generation)
     prompt = analyze_query(query)
@@ -156,19 +159,25 @@ async def getChatResponse(
     all_machines = await machine_repository.get_all(request)
     all_machines = [(machine.name, machine.category) for machine in all_machines]
 
-    # Check if the data is already in session memory and use it if present
-    cost_prediction_for_category = chat_memory[session_id].get("cost_prediction_for_category", None)
-    utilization = chat_memory[session_id].get("utilization", None)
-    energy_efficiency = chat_memory[session_id].get("energy_efficiency", None)
+    # Retrieve session-specific context data
+    context = chat_memory[session_id]["context"]
+    cost_prediction_for_category = context.get("cost_prediction_for_category")
+    utilization = context.get("utilization")
+    energy_efficiency = context.get("energy_efficiency")
 
-    if not cost_prediction_for_category or not utilization or not energy_efficiency:
-        # Fetch analysis data dynamically if not in memory
-        cost_prediction_for_category, utilization, energy_efficiency = await fetch_analysis(query)
+    if not (cost_prediction_for_category and utilization and energy_efficiency):
+        fetched_data = await fetch_analysis(query)
 
-        # Store the fetched data in the session memory to avoid refetching in future queries
-        chat_memory[session_id]["cost_prediction_for_category"] = cost_prediction_for_category
-        chat_memory[session_id]["utilization"] = utilization
-        chat_memory[session_id]["energy_efficiency"] = energy_efficiency
+        # Update session memory with newly fetched data
+        cost_prediction_for_category = cost_prediction_for_category or fetched_data[0]
+        utilization = utilization or fetched_data[1]
+        energy_efficiency = energy_efficiency or fetched_data[2]
+
+        chat_memory[session_id]["context"].update({
+            "cost_prediction_for_category": cost_prediction_for_category,
+            "utilization": utilization,
+            "energy_efficiency": energy_efficiency,
+        })
 
     # Dynamically include the fetched kb and the chat history in the prompt
     messages = [
