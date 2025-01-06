@@ -99,27 +99,36 @@ def analyze_query(query: str) -> str:
         return KPI_PROMPT
     return CHAT_PROMPT
 
-async def fetch_analysis(query: str):
-    """Fetch only the necessary analysis data based on the query."""
+async def fetch_analysis(query: str, context: dict):
+    """
+    Fetch only the necessary analysis data based on the query and existing context.
+
+    Args:
+    - query: str - The user's query.
+    - context: dict - The existing session context to avoid redundant fetches.
+
+    Returns:
+    - tuple: (cost_data, utilization_data, energy_efficiency_data)
+    """
     cost_terms = {"cost prediction", "previsione dei costi"}
     utilization_terms = {"utilization", "utilisation", "usage", "utilizzo"}
     energy_efficiency_terms = {"energy efficiency", "efficienza energetica"}
 
     query_lower = query.lower()  # Convert once for efficiency
 
-    cost_data = None
-    utilization_data = None
-    energy_efficiency_data = None
+    cost_data = context.get("cost_prediction_for_category")
+    utilization_data = context.get("utilization")
+    energy_efficiency_data = context.get("energy_efficiency")
 
-    if any(term in query_lower for term in cost_terms):
+    if not cost_data and any(term in query_lower for term in cost_terms):
         logger.info("Fetching cost prediction data...")
         cost_data = COST_PREDICTION_DATA
     
-    if any(term in query_lower for term in utilization_terms):
+    if not utilization_data and any(term in query_lower for term in utilization_terms):
         logger.info("Fetching utilization data...")
         utilization_data = UTILIZATION_DATA
     
-    if any(term in query_lower for term in energy_efficiency_terms):
+    if not energy_efficiency_data and any(term in query_lower for term in energy_efficiency_terms):
         logger.info("Fetching energy efficiency data...")
         energy_efficiency_data = ENERGY_EFFICIENCY_DATA
 
@@ -161,23 +170,16 @@ async def getChatResponse(
 
     # Retrieve session-specific context data
     context = chat_memory[session_id]["context"]
-    cost_prediction_for_category = context.get("cost_prediction_for_category")
-    utilization = context.get("utilization")
-    energy_efficiency = context.get("energy_efficiency")
 
-    if not (cost_prediction_for_category and utilization and energy_efficiency):
-        fetched_data = await fetch_analysis(query)
+    # Fetch data only if missing
+    cost_prediction_for_category, utilization, energy_efficiency = await fetch_analysis(query, context)
 
-        # Update session memory with newly fetched data
-        cost_prediction_for_category = cost_prediction_for_category or fetched_data[0]
-        utilization = utilization or fetched_data[1]
-        energy_efficiency = energy_efficiency or fetched_data[2]
-
-        chat_memory[session_id]["context"].update({
-            "cost_prediction_for_category": cost_prediction_for_category,
-            "utilization": utilization,
-            "energy_efficiency": energy_efficiency,
-        })
+    # Update session memory with newly fetched data
+    chat_memory[session_id]["context"].update({
+        "cost_prediction_for_category": cost_prediction_for_category,
+        "utilization": utilization,
+        "energy_efficiency": energy_efficiency,
+    })
 
     # Dynamically include the fetched kb and the chat history in the prompt
     messages = [
